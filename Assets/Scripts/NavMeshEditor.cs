@@ -17,13 +17,15 @@ namespace Assets
             NavMeshController ctrl = (NavMeshController)target;
             
 
-            ctrl.ObstacleLayer = EditorGUILayout.LayerField("Obstacle Layer:", ctrl.ObstacleLayer);
+           
             ctrl.WalkableLayer = EditorGUILayout.LayerField("Walkable Layer:", ctrl.WalkableLayer);
+            ctrl.ObstacleLayer = EditorGUILayout.LayerField("Obstacle Layer:", ctrl.ObstacleLayer);
 
+            EditorGUILayout.FloatField("Actor Diameter", 0);
 
             if (GUILayout.Button("Build NavMesh"))
             {
-                ctrl.Build();
+                ctrl.BuildMesh();
             }
 
             ctrl.ShouldDrawConnections = GUILayout.Toggle(ctrl.ShouldDrawConnections, "Show Connections");

@@ -10,33 +10,25 @@ using System;
 [RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
 public class NavMeshController : MonoBehaviour
 {
-    public GameObject Location;
-    public GameObject Target;
-
-    NavMeshGenerator navMeshGenerator = new NavMeshGenerator();
-
-    NavMesh2D navMesh;
-
-    List<Vector2> path;
-
     public int ObstacleLayer { get; set; }
     public int WalkableLayer { get; set; }
 
     public bool ShouldDrawConnections { get; set; }
-    //public bool DrawMesh { get; set; }
 
-    public void Build()
+    NavMeshGenerator navMeshGenerator = new NavMeshGenerator();
+    NavMesh2D navMesh;
+
+    /// <summary>
+    /// Find walkable and obstacle points, then build NavMesh
+    /// </summary>
+    public void BuildMesh()
     {
-        // Create Vector2 vertices
         var walkablePoly = FindCollidorPoints(go => go.layer == WalkableLayer).SelectMany(x => x);
-
         var obstaclesPolys = FindCollidorPoints(go => go.layer == ObstacleLayer);
 
         navMesh = navMeshGenerator.Generate(walkablePoly, obstaclesPolys);
 
         GetComponent<MeshFilter>().mesh = navMeshGenerator.Mesh;
-
-
     }
 
     /// <summary>
@@ -50,6 +42,10 @@ public class NavMeshController : MonoBehaviour
             if (predicate(go))
                 yield return go.GetComponent<PolygonCollider2D>().points.Select(point => go.transform.TransformPoint(point));
     }
+
+    public GameObject Location;
+    public GameObject Target;
+    List<Vector2> path;
 
     /// <summary>
     /// Find a Path from location to target using NavMesh2D

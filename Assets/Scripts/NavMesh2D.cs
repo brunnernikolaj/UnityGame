@@ -12,39 +12,24 @@ namespace Assets
         //private Stack<>
 
         public List<DelaunayTriangle> Triangles { get; private set; }
-        List<Vector2> _points;
 
-        public NavMesh2D(List<DelaunayTriangle> triangles, List<Vector2> points)
+        public NavMesh2D(List<DelaunayTriangle> triangles)
         {
             Triangles = triangles;
-            _points = points;
         }
 
+        /// <summary>
+        /// Finds a path from startPoint to endPoint using the A* Algorithm 
+        /// </summary>
+        /// <param name="startPoint"></param>
+        /// <param name="endPoint"></param>
+        /// <returns>A List with representing the path to walk</returns>
         public List<Vector2> PathFind(Vector2 startPoint, Vector2 endPoint)
         {
             var startTriangle = FindTriangle(startPoint);
             var endTriangle = FindTriangle(endPoint);
 
-            TrianglePath pathToPoint = new TrianglePath { Point = startPoint };
-
-            var startPoints = startTriangle.Points.Select(x => new TrianglePath { Point = x.ToVector2() });
-
-            TrianglePath startNode = new TrianglePath { Point = startPoint, GCost = 99999 };
-            foreach (var item in startPoints)
-            {
-                var gCost = Vector2.Distance(item.Point, startNode.Point);
-                var hCost = Vector2.Distance(item.Point, endPoint);
-                var fCost = gCost + hCost;
-
-                if (startNode.FCost > fCost)
-                {
-                    item.GCost = gCost;
-                    item.HCost = hCost;
-                    startNode = item;
-                }
-            }
-
-            startNode.Parent = pathToPoint;
+            TrianglePath startNode = FindStartNode(startPoint, endPoint, startTriangle);
 
             var open = new List<TrianglePath> { startNode };
             var closed = new HashSet<TrianglePath>();
@@ -56,8 +41,6 @@ namespace Assets
                 foreach (var item in FindNeighbourPoints2(cheapestNode.Point.ToTriPoint()))
                 {
                     item.Parent = cheapestNode;
-
-                    
 
                     item.GCost = cheapestNode.GCost + Vector2.Distance(item.Point, cheapestNode.Point);
                     item.HCost = Vector2.Distance(item.Point, endPoint);
@@ -85,6 +68,34 @@ namespace Assets
 
         }
 
+        private static TrianglePath FindStartNode(Vector2 startPoint, Vector2 endPoint, DelaunayTriangle startTriangle)
+        {
+            var startPoints = startTriangle.Points.Select(x => new TrianglePath { Point = x.ToVector2() });
+
+            TrianglePath startNode = new TrianglePath { Point = startPoint, GCost = 99999 };
+
+            TrianglePath temp = new TrianglePath { GCost = 9999};
+
+            foreach (var item in startPoints)
+            {
+                var gCost = Vector2.Distance(item.Point, startPoint);
+                var hCost = Vector2.Distance(item.Point, endPoint);
+                var fCost = gCost + hCost;
+
+                if (temp.FCost > fCost)
+                {
+                    item.Parent = startNode;
+                    item.GCost = gCost;
+                    item.HCost = hCost;
+                    temp = item;
+                }
+            }
+
+            startNode = temp;
+
+            return startNode;
+        }
+
         private static List<Vector2> BuildPath(Vector2 endPoint, TrianglePath item)
         {
             var node = item;
@@ -105,19 +116,18 @@ namespace Assets
             {
                 for (int k = i + 2; k < path.Count;)
                 {
-                    var direction = path[i] - path[k];
-
 
                     if (Physics2D.Linecast(path[i], path[k], layerMask).collider == null)
                     {
                         path.Remove(path[i + 1]);
+                        break;
                     }
                     else
                     {
                         k++;
                     }
                 }
-                
+
             }
 
             return path;

@@ -32,14 +32,15 @@ namespace Assets
             BuildMesh(walkableArea, poly);
 
             return BuildTriangleMap(poly.Triangles);
-
-
-            // NavMesh = new NavMesh2D(poly.Triangles.Select(tri => new NavMesh2D.Triangle { vert1 = tri.Points._0, vert2 = tri.Points._1, vert3 = tri.Points._2 }).ToArray());
         }
 
+        /// <summary>
+        /// Connects each triangle to its neighbours
+        /// </summary>
+        /// <param name="triangles"></param>
+        /// <returns></returns>
         private NavMesh2D BuildTriangleMap(IList<DelaunayTriangle> triangles)
         {
-
             Dictionary<DelaunayTriangle, int> triangleIds = new Dictionary<DelaunayTriangle, int>();
             Dictionary<TriangulationPoint, int> vertexIds = new Dictionary<TriangulationPoint, int>();
             List<TriangulationPoint> vertices = new List<TriangulationPoint>();
@@ -55,10 +56,10 @@ namespace Assets
                         vertexIds.Add(vertex, vertexIds.Count);
                         vertices.Add(vertex);
                     }
-
                 }
             }
 
+            //Build a dictionary of edges pointing to triangles that contain them    
             Dictionary<Edge, List<DelaunayTriangle>> edgeToTriangles = new Dictionary<Edge, List<DelaunayTriangle>>();
             foreach (var triangle in triangles)
             {
@@ -76,35 +77,34 @@ namespace Assets
                 }
             }
 
+            //Connect neighbours that share an edge
             foreach (var triangle in triangles)
             {
-                int myId = triangleIds[triangle];
                 var edges = FindEdges(triangle);
 
                 int index = 0;
 
                 foreach (var edge in edges)
-                {
-                    
+                {                    
                     foreach (var triangle2 in edgeToTriangles[edge])
                     {
                         if (triangle2.IsInterior)
                         {
-                            triangle.Neighbors[index] = triangle2;
-                            
-                        }
-                        
+                            triangle.Neighbors[index] = triangle2;                          
+                        }                       
                     }
                     index++;
                 }
             }
 
-            var verts = vertices.Select(x => x.ToVector2());
-
-
-            return new NavMesh2D(triangles.ToList(), verts.ToList());
+            return new NavMesh2D(triangles.ToList());
         }
 
+        /// <summary>
+        /// Finds the edges of a triangle
+        /// </summary>
+        /// <param name="triangle"></param>
+        /// <returns></returns>
         private List<Edge> FindEdges(DelaunayTriangle triangle)
         {
             List<Edge> result = new List<Edge>();
@@ -117,6 +117,12 @@ namespace Assets
             return result;
         }
 
+        /// <summary>
+        /// Builds a mesh that unity can work with
+        /// </summary>
+        /// <param name="walkableArea"></param>
+        /// <param name="poly"></param>
+        /// <returns></returns>
         private Mesh BuildMesh(List<List<IntPoint>> walkableArea, Polygon poly)
         {
             var verts = walkableArea
@@ -124,7 +130,7 @@ namespace Assets
                             .Select(y => new Vector3(y.X, y.Y, 0))
                             .ToList();
 
-            //Dictionary With vertices as keys and their index value
+            //Dictionary With vertices as keys and their index as value
             var dict = verts
                 .Select((vert, index) => new { key = vert, value = index })
                 .ToDictionary(k => k.key, v => v.value);
@@ -154,9 +160,9 @@ namespace Assets
 
         private Polygon Triangulate(List<List<IntPoint>> walkableArea)
         {
-            //blocked
+            //Obstacles
             var clockwisePolygons = walkableArea.Where(x => IsClockwisePolygon(x.ToArray())).ToList();
-            //walkable
+            //Walkable
             var counterClockwisePolygons = walkableArea.Except(clockwisePolygons).ToList();
 
             Polygon poly = null;
@@ -168,8 +174,6 @@ namespace Assets
                 {
                     poly.AddHole(new Polygon(hole.Select(x => new PolygonPoint(x.X, x.Y))));
                 }
-
-
                 P2T.Triangulate(poly);
             }
 
