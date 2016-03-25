@@ -114,17 +114,15 @@ namespace Assets
 
             for (int i = 0; i < path.Count - 1; i++)
             {
-                for (int k = i + 2; k < path.Count;)
+                for (int k = i + 2; k < path.Count; k++)
                 {
-
-                    if (Physics2D.Linecast(path[i], path[k], layerMask).collider == null)
+                    if (Physics2D.Linecast(path[i], path[k], layerMask).collider == null )
                     {
                         path.Remove(path[i + 1]);
-                        break;
                     }
                     else
                     {
-                        k++;
+                        break;
                     }
                 }
 
