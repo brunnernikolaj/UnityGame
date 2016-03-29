@@ -10,6 +10,7 @@ using System;
 [RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
 public class NavMeshController : MonoBehaviour
 {
+
     public int ObstacleLayer { get; set; }
     public int WalkableLayer { get; set; }
 
@@ -24,7 +25,7 @@ public class NavMeshController : MonoBehaviour
     public void BuildMesh()
     {
         var walkablePoly = FindCollidorPoints(go => go.layer == WalkableLayer).SelectMany(x => x);
-        var obstaclesPolys = FindCollidorPoints(go => go.layer == ObstacleLayer);
+        var obstaclesPolys = FindCollidorPoints(go => go.layer == ObstacleLayer).Select(x => x);
 
         navMesh = navMeshGenerator.Generate(walkablePoly, obstaclesPolys);
 
@@ -40,7 +41,7 @@ public class NavMeshController : MonoBehaviour
     {
         foreach (var go in FindObjectsOfType<GameObject>())
             if (predicate(go))
-                yield return go.GetComponent<PolygonCollider2D>().points.Select(point => go.transform.TransformPoint(point));
+                yield return go.GetComponent<PolygonCollider2D>().points.Select(point => Vector3.Scale(go.transform.TransformPoint(point), new Vector2(10,10)));
     }
 
     public GameObject Location;

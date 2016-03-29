@@ -14,6 +14,16 @@ namespace Assets
             return new Vector2((float)source.X, (float)source.Y);
         }
 
+        public static Vector2 ToVector2(this IntPoint source)
+        {
+            return new Vector2((float)source.X, (float)source.Y);
+        }
+
+        public static IntPoint ToIntPoint(this Vector2 source)
+        {
+            return new IntPoint(source.x, source.y);
+        }
+
         public static TriangulationPoint ToTriPoint(this Vector2 source)
         {
             return new TriangulationPoint(source.x, source.y);

@@ -27,9 +27,35 @@ namespace Assets
 
             List<List<IntPoint>> walkableArea = SubtactPolys(walkablePoly, obstaclesPolys);
 
+            //var walkable2 = new List<List<IntPoint>>
+            //{
+            //    walkableArea
+            //    .Select(x => x.Select(y => Vector2.Scale(y.ToVector2(), new Vector2(0.1f, 0.1f)).ToIntPoint()))
+            //};
+
+            List<List<Vector3>> walkableArea2 = new List<List<Vector3>>();
+
+            for (int i = 0; i < walkableArea.Count; i++)
+            {
+                List<Vector3> temp = new List<Vector3>();
+                for (int k = 0; k < walkableArea[i].Count; k++)
+                {
+                    temp.Add(new Vector3 (walkableArea[i][k].X * 0.1f, walkableArea[i][k].Y * 0.1f));
+                }
+                walkableArea2.Add(temp);
+            }
+
             Polygon poly = Triangulate(walkableArea);
 
-            BuildMesh(walkableArea, poly);
+            foreach (var tri in poly.Triangles)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    tri.Points[i] = new TriangulationPoint(Math.Round( tri.Points[i].X * 0.1f, 2), Math.Round(tri.Points[i].Y * 0.1f, 2));
+                }
+            }
+
+            BuildMesh(walkableArea2, poly);
 
             return BuildTriangleMap(poly.Triangles);
         }
@@ -41,6 +67,8 @@ namespace Assets
         /// <returns></returns>
         private NavMesh2D BuildTriangleMap(IList<DelaunayTriangle> triangles)
         {
+            
+
             Dictionary<DelaunayTriangle, int> triangleIds = new Dictionary<DelaunayTriangle, int>();
             Dictionary<TriangulationPoint, int> vertexIds = new Dictionary<TriangulationPoint, int>();
             List<TriangulationPoint> vertices = new List<TriangulationPoint>();
@@ -123,22 +151,30 @@ namespace Assets
         /// <param name="walkableArea"></param>
         /// <param name="poly"></param>
         /// <returns></returns>
-        private Mesh BuildMesh(List<List<IntPoint>> walkableArea, Polygon poly)
+        private Mesh BuildMesh(List<List<Vector3>> walkableArea, Polygon poly)
         {
             var verts = walkableArea
                             .SelectMany(x => x)
-                            .Select(y => new Vector3(y.X, y.Y, 0))
                             .ToList();
 
             //Dictionary With vertices as keys and their index as value
             var dict = verts
                 .Select((vert, index) => new { key = vert, value = index })
-                .ToDictionary(k => k.key, v => v.value);
+                .ToDictionary(k => new Vector3(k.key.x,k.key.y,0), v => v.value);
 
             var triangles = poly.Triangles
                 .SelectMany(x => x.Points)
-                .Select(y => dict[new Vector3((float)y.X, (float)y.Y, 0)])
+                .Select(y => dict.Where(x => new Vector3(x.Key.x, x.Key.y, 0) == new Vector3((float)y.X, (float)y.Y, 0)).First().Value)
                 .ToArray();
+
+
+            //foreach (var item in poly.Triangles.SelectMany(x => x.Points))
+            //{
+            //    var vector = new Vector3((float)item.X, (float)item.Y, 0);
+            //    var it = dict.Where(x => new Vector3(x.Key.x,x.Key.y,0) == vector).First();
+            //    Debug.Log("hi");
+            //}
+
 
             var colors = verts
                 .Select(x => Color)
@@ -206,7 +242,7 @@ namespace Assets
             foreach (var obstacle in obstaclesPolys)
             {
                 offset.AddPath(obstacle, JoinType.jtMiter, EndType.etClosedPolygon);
-                offset.Execute(ref offsetContainer, 1);
+                offset.Execute(ref offsetContainer, 10);
 
                 foreach (var item in offsetContainer)
                 {
