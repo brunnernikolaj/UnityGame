@@ -26,7 +26,7 @@ namespace Assets
 
         public static TriangulationPoint ToTriPoint(this Vector2 source)
         {
-            return new TriangulationPoint(source.x, source.y);
+            return new TriangulationPoint(Math.Round(source.x,1), Math.Round(source.y, 1));
         }
 
         //public static Triangle ToTriangle(this DelaunayTriangle source)

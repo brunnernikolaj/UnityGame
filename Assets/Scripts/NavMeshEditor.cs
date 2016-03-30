@@ -14,9 +14,7 @@ namespace Assets
 
         public override void OnInspectorGUI()
         {
-            NavMeshController ctrl = (NavMeshController)target;
-            
-
+            NavMeshController ctrl = (NavMeshController)target;           
            
             ctrl.WalkableLayer = EditorGUILayout.LayerField("Walkable Layer:", ctrl.WalkableLayer);
             ctrl.ObstacleLayer = EditorGUILayout.LayerField("Obstacle Layer:", ctrl.ObstacleLayer);
@@ -32,7 +30,7 @@ namespace Assets
 
             if (GUILayout.Button("Test path"))
             {
-                ctrl.FindPath();
+                ctrl.FindPathDebug();
             }
 
             DrawDefaultInspector();

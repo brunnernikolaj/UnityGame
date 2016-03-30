@@ -112,22 +112,22 @@ namespace Assets
 
             int layerMask = 1 << 8;
 
-            //for (int i = 0; i < path.Count - 1; i++)
-            //{
-            //    for (int k = i + 2; k < path.Count; k++)
-            //    {
-            //        if (Physics2D.Linecast(path[i], path[k], layerMask).collider == null )
-            //        {
-            //            path.Remove(path[i + 1]);
-            //        }
-            //        else
-            //        {
-            //            break;
-            //        }
-            //    }
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                for (int k = i + 2; k < path.Count; k++)
+                {
+                    if (Physics2D.Linecast(path[i], path[k], layerMask).collider == null)
+                    {
+                        path.Remove(path[i + 1]);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
 
-            //}
-
+            }
+            path.Reverse();
             return path;
         }
 

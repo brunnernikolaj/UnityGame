@@ -18,10 +18,12 @@ namespace Assets
             Color = Color.blue;
         }
 
-        public NavMesh2D Generate(IEnumerable<Vector3> walkable, IEnumerable<IEnumerable<Vector3>> blocked)
+        public NavMesh2D Generate(IEnumerable<IEnumerable<Vector3>> walkable, IEnumerable<IEnumerable<Vector3>> blocked)
         {
-            var walkablePoly = walkable.Select(vector => new IntPoint(vector.x, vector.y));
+            var walkablePoly = walkable.Select(list => list.Select(vector => new IntPoint(vector.x, vector.y)).ToList()).ToList();
             var obstaclesPolys = blocked.Select(list => list.Select(vector => new IntPoint(vector.x, vector.y)).ToList());
+
+            walkablePoly = MergeWalkable(walkablePoly);
 
             obstaclesPolys = ExpandObstacles(obstaclesPolys);
 
@@ -51,13 +53,23 @@ namespace Assets
             {
                 for (int i = 0; i < 3; i++)
                 {
-                    tri.Points[i] = new TriangulationPoint(Math.Round( tri.Points[i].X * 0.1f, 2), Math.Round(tri.Points[i].Y * 0.1f, 2));
+                    tri.Points[i] = new TriangulationPoint(Math.Round( tri.Points[i].X * 0.1f, 1), Math.Round(tri.Points[i].Y * 0.1f, 1));
                 }
             }
 
             BuildMesh(walkableArea2, poly);
 
             return BuildTriangleMap(poly.Triangles);
+        }
+
+        private List<List<IntPoint>> MergeWalkable(List<List<IntPoint>> walkablePoly)
+        {
+            var clipper = new Clipper();
+            var result = new List<List<IntPoint>>();
+            clipper.AddPaths(walkablePoly, PolyType.ptClip, true);
+            clipper.Execute(ClipType.ctUnion, result, PolyFillType.pftNonZero, PolyFillType.pftNonZero);
+
+            return result;
         }
 
         /// <summary>
@@ -164,7 +176,7 @@ namespace Assets
 
             var triangles = poly.Triangles
                 .SelectMany(x => x.Points)
-                .Select(y => dict.Where(x => new Vector3(x.Key.x, x.Key.y, 0) == new Vector3((float)y.X, (float)y.Y, 0)).First().Value)
+                .Select(y => dict.Where(x => new Vector3(x.Key.x, x.Key.y, 0) == new Vector3((float)y.X, (float)y.Y, 0)).FirstOrDefault().Value)
                 .ToArray();
 
 
@@ -216,10 +228,10 @@ namespace Assets
             return poly;
         }
 
-        private static List<List<IntPoint>> SubtactPolys(IEnumerable<IntPoint> walkablePoly, IEnumerable<List<IntPoint>> obstaclesPolys)
+        private static List<List<IntPoint>> SubtactPolys(List<List<IntPoint>> walkablePoly, IEnumerable<List<IntPoint>> obstaclesPolys)
         {
             var clipper = new Clipper();
-            var result = new List<List<IntPoint>> { new List<IntPoint>(walkablePoly) };
+            var result = walkablePoly;
 
             foreach (var obstacal in obstaclesPolys)
             {

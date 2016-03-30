@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System;
 
 [RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
-public class NavMeshController : MonoBehaviour
+public class NavMeshController : Singleton<NavMeshController>
 {
 
     public int ObstacleLayer { get; set; }
@@ -19,13 +19,21 @@ public class NavMeshController : MonoBehaviour
     NavMeshGenerator navMeshGenerator = new NavMeshGenerator();
     NavMesh2D navMesh;
 
+    public void Start()
+    {
+        ObstacleLayer = 8;
+        WalkableLayer = 9;
+        BuildMesh();
+
+    }
+
     /// <summary>
     /// Find walkable and obstacle points, then build NavMesh
     /// </summary>
     public void BuildMesh()
     {
-        var walkablePoly = FindCollidorPoints(go => go.layer == WalkableLayer).SelectMany(x => x);
-        var obstaclesPolys = FindCollidorPoints(go => go.layer == ObstacleLayer).Select(x => x);
+        var walkablePoly = FindCollidorPoints(go => go.layer == WalkableLayer);
+        var obstaclesPolys = FindCollidorPoints(go => go.layer == ObstacleLayer);
 
         navMesh = navMeshGenerator.Generate(walkablePoly, obstaclesPolys);
 
@@ -51,7 +59,7 @@ public class NavMeshController : MonoBehaviour
     /// <summary>
     /// Find a Path from location to target using NavMesh2D
     /// </summary>
-    public void FindPath()
+    public void FindPathDebug()
     {
         Stopwatch sw = new Stopwatch();
 
@@ -62,6 +70,18 @@ public class NavMeshController : MonoBehaviour
         UnityEngine.Debug.Log("Found path in " + sw.Elapsed.Milliseconds + "ms");
     }
 
+    public List<Vector2> FindPath(Vector3 startPos, Vector3 endPos)
+    {
+        Stopwatch sw = new Stopwatch();
+
+        sw.Start();
+        var tempPath = navMesh.PathFind(startPos, endPos);
+        sw.Stop();
+
+        UnityEngine.Debug.Log("Found path in " + sw.Elapsed.Milliseconds + "ms");
+
+        return tempPath;
+    }
 
     void OnDrawGizmos()
     {
