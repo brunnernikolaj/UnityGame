@@ -29,6 +29,12 @@ namespace Assets
             return new TriangulationPoint(Math.Round(source.x,1), Math.Round(source.y, 1));
         }
 
+        public static float AngleBetween(this Transform source, Vector3 other)
+        {
+            var relative = other - source.position;
+            return Mathf.Atan2(relative.y, relative.x) * Mathf.Rad2Deg;
+        }
+
         //public static Triangle ToTriangle(this DelaunayTriangle source)
         //{
 
