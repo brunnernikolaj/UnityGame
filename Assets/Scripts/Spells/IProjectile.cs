@@ -5,8 +5,8 @@ using System.Text;
 
 namespace Assets.Scripts
 {
-    interface IProjectile
+    interface IProjectile : ISpell
     {
-        void Fire();
+
     }
 }

@@ -29,6 +29,9 @@ namespace Assets
             var startTriangle = FindTriangle(startPoint);
             var endTriangle = FindTriangle(endPoint);
 
+            if (startTriangle == null || endTriangle == null)
+                return null;
+
             TrianglePath startNode = FindStartNode(startPoint, endPoint, startTriangle);
 
             var open = new List<TrianglePath> { startNode };

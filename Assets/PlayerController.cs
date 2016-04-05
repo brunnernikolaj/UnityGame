@@ -4,13 +4,27 @@ using System.Collections.Generic;
 using UnityEngine.Networking;
 using Assets;
 using Assets.Scripts;
+using UnityEngine.UI;
 
 public class PlayerController : NetworkBehaviour
 {
     public GameObject BulletPrefab;
     public GameObject SpawnPoint;
+
     public float MovementSpeed;
 
+    [SyncVar(hook ="OnStartHealthChange")]
+    public float StartHealth;
+    private void OnStartHealthChange(float updatedHealth)
+    {
+        StartHealth = updatedHealth;
+        HpText.text = "Current Hp: " + StartHealth;
+    }
+
+    [SyncVar]
+    public float KnockbackMultiplier;
+
+    private Text HpText;
     private Stack<Vector2> path;
     private Rigidbody2D rbody;
 
@@ -19,8 +33,17 @@ public class PlayerController : NetworkBehaviour
     // Use this for initialization
     void Start()
     {
+        if (isLocalPlayer)
+        {
+            var canvas = FindObjectOfType<Canvas>();
+            HpText = canvas.transform.Find("Text").GetComponent<Text>();
+
+            HpText.text = "Current Hp: " + StartHealth;
+        }
         path = new Stack<Vector2>();
         rbody = GetComponent<Rigidbody2D>();
+        
+        
     }
 
     // Update is called once per frame
@@ -31,7 +54,14 @@ public class PlayerController : NetworkBehaviour
             var mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousepos.z = 0;
 
-            path = new Stack<Vector2>(NavMeshController.Instance.FindPath(transform.position, mousepos));
+            var tempPath = NavMeshController.Instance.FindPath(transform.position, mousepos);
+
+            //No path found
+            if (tempPath == null)
+                return;
+
+            path = new Stack<Vector2>(tempPath);
+
             NextPoint = path.Pop();
             IsMoving = true;
         }
@@ -52,8 +82,7 @@ public class PlayerController : NetworkBehaviour
         transform.rotation = Quaternion.Euler(0, 0, targetAngle - 90);
 
         var bullet = (GameObject)Instantiate(BulletPrefab, SpawnPoint.transform.position, Quaternion.Euler(0, 0, targetAngle));
-        bullet.GetComponent<IProjectile>().Fire();
-
+        bullet.GetComponent<ISpellObject>().StartSpell();
         NetworkServer.Spawn(bullet);
 
         Destroy(bullet, 5);
@@ -61,56 +90,70 @@ public class PlayerController : NetworkBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (isServer)
-            RpcHit(collision.contacts[0].normal);     
-    }
+        var spell = collision.gameObject.GetComponent<ISpellObject>().Spell;
+        if (spell != null)
+        {
+            if (spell is IProjectile)
+            {
+                Debug.Log("Nuce");
 
+            }
+
+            if (isServer)
+            {
+                StartHealth -= spell.Damage;
+                KnockbackMultiplier += spell.KnockbackMultiplier;
+                int spellId = (int)spell.Type;
+                RpcHit(collision.contacts[0].normal, spellId);               
+            }
+               
+        }
+
+         
+    }
+    /// <summary>
+    /// Called by the server when someones hit
+    /// </summary>
+    /// <param name="collision"></param>
     [ClientRpc]
-    void RpcHit(Vector2 collision)
+    void RpcHit(Vector2 collision, int spellIndex)
     {
         isHit = true;
         col = collision;
+        spellHitWith = SpellManager.Instance[(SpellType)spellIndex];
     }
 
+    ISpell spellHitWith;
     bool isHit;
     Vector2 col;
 
     void FixedUpdate()
     {
         if (IsMoving)
-            RpcMove();
+            Move();
 
         if (isHit)
-        {
-            var ridgedBody = GetComponent<Rigidbody2D>();
-            ridgedBody.AddForce(col * 900f);
-            //transform.position = Vector3.Lerp(transform.position, transform.position + new Vector3(ridgedBody.velocity.x, ridgedBody.velocity.y, 0), Time.deltaTime * 5);
-            isHit = false;
-        }
+            KnockBack();
+    }
+
+    private void KnockBack()
+    {
+        var ridgedBody = GetComponent<Rigidbody2D>();
+        ridgedBody.AddForce(col * (spellHitWith.BaseKnockback * KnockbackMultiplier));
+        isHit = false;
     }
 
     private Vector3 NextPoint;
     private bool IsMoving;
 
-    void RpcMove()
+    void Move()
     {
-        int layerMask = 1 << 8;
-
-        for (int i = 0; i < 3; i++)
-        {
-            if (path.Count > 0 && Physics2D.Linecast(transform.position, path.Peek(), layerMask).collider == null)
-            {
-                NextPoint = path.Pop();
-            }
-        }
-
-
-
+        SmoothPath();
         Vector3 relative = NextPoint - transform.position;
         Vector3 movementNormal = Vector3.Normalize(relative);
         var distance = Vector3.Distance(transform.position, NextPoint);
         float targetAngle = Mathf.Atan2(relative.y, relative.x) * Mathf.Rad2Deg - 90;
-
+        
         if (distance < 0.1)
         {
             if (path.Count == 0)
@@ -121,13 +164,29 @@ public class PlayerController : NetworkBehaviour
             }
 
             NextPoint = path.Pop();
+            
         }
         else
         {
             rbody.AddForce(new Vector2(movementNormal.x, movementNormal.y) * MovementSpeed);
         }
-
         transform.rotation = Quaternion.Euler(0, 0, targetAngle);
+    }
 
+    private void SmoothPath()
+    {
+        int layerMask = 1 << 8;
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (path.Count > 0 && Physics2D.Linecast(transform.position, path.Peek(), layerMask).collider == null)
+            {
+                NextPoint = path.Pop();
+            }
+            else
+            {
+                break;
+            }
+        }
     }
 }
