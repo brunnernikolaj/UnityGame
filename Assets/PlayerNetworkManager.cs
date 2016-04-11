@@ -14,8 +14,11 @@ public class PlayerNetworkManager : NetworkBehaviour {
 	
 	}
 
+   
+
     public override void OnStartLocalPlayer()
     {
+
         GetComponent<PlayerController>().enabled = true;
     }
 }

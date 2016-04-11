@@ -42,9 +42,15 @@ public class PlayerController : NetworkBehaviour
         }
         path = new Stack<Vector2>();
         rbody = GetComponent<Rigidbody2D>();
-        
-        
+
+        GameManager.OnRoundStart += NewRound;
     }
+
+    private void NewRound()
+    {
+        transform.position = new Vector3(Random.Range(100, 200), Random.Range(100, 200));
+    }
+
 
     // Update is called once per frame
     void Update()
@@ -68,6 +74,7 @@ public class PlayerController : NetworkBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
+            GameManager.Instance.PlayerKilled((int)netId.Value,0);
             var mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousepos.z = 0;
             CmdFire(mousepos);
@@ -103,6 +110,12 @@ public class PlayerController : NetworkBehaviour
             {
                 StartHealth -= spell.Damage;
                 KnockbackMultiplier += spell.KnockbackMultiplier;
+
+                if (StartHealth <= 0)
+                {
+                    GameManager.Instance.PlayerKilled((int)netId.Value,0);
+                }
+
                 int spellId = (int)spell.Type;
                 RpcHit(collision.contacts[0].normal, spellId);               
             }
