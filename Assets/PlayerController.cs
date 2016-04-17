@@ -35,10 +35,10 @@ public class PlayerController : NetworkBehaviour
     {
         if (isLocalPlayer)
         {
-            var canvas = FindObjectOfType<Canvas>();
-            HpText = canvas.transform.Find("Text").GetComponent<Text>();
+            //var canvas = FindObjectOfType<Canvas>();
+            //HpText = canvas.transform.Find("Text").GetComponent<Text>();
 
-            HpText.text = "Current Hp: " + StartHealth;
+            //HpText.text = "Current Hp: " + StartHealth;
         }
         path = new Stack<Vector2>();
         rbody = GetComponent<Rigidbody2D>();
@@ -74,7 +74,7 @@ public class PlayerController : NetworkBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            GameManager.Instance.PlayerKilled((int)netId.Value,0);
+           
             var mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousepos.z = 0;
             CmdFire(mousepos);

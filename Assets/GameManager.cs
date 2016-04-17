@@ -4,34 +4,72 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.Networking;
 using Assets;
+using Assets.Scripts;
 
-public class GameManager : Singleton<GameManager> {
+public class GameManager : NetworkBehaviour{
 
-    public int Rounds;
+    static GameManager _instance;
+    public static GameManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindObjectOfType<GameManager>();
+            }
+            return _instance;
+        }
+    }
+
+        public int Rounds;
 
     public delegate void RoundStart();
 
+    List<Player> _players = new List<Player>();
+
     public IEnumerable<Player> GetPlayers()
     {
-        return _players.Values;
+        return _players;
     }
 
     public static event RoundStart OnRoundStart;
 
-    private Dictionary<int,Player> _players = new Dictionary<int, Player>();
+
     private int playerCount;
 
 	// Use this for initialization
-	void Awake () {
-        _players.Add(3, new Player { Name ="abe"});
+	void Start () {
+        var players = (NetworkLobbyManager.singleton as NetworkLobbyManager).lobbySlots;
+
+        foreach (var item in players)
+        {
+            if (item != null)
+            {
+                ScoreboardController.Instance.AddPlayer(new Player { Name = "Lars" });
+            }
+           
+        }
     }
 
-    public void AddPlayer(int id, Player player)
+    public void AddPlayer( Player player)
     {
-        _players.Add(id, player);
-        playerCount++;
+        CmdPlayerJoined();
     }
-	
+
+    [Command]
+    void CmdPlayerJoined()
+    {
+        //var player = new Player { Name = "Lars" };
+        //_players.Add(player);
+
+        //ScoreboardController.Instance.Clear();
+
+        //foreach (var item in _players)
+        //{
+        //    NetworkServer.Spawn();
+        //}
+    }
+
     public void PlayerKilled(int killed, int killer)
     {
         _players[killer].Score++;
@@ -60,5 +98,6 @@ public class GameManager : Singleton<GameManager> {
     private void EndGame()
     {
         throw new NotImplementedException();
+
     }
 }
