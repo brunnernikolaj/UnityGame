@@ -10,30 +10,35 @@ namespace Assets.Scripts
 {
     class CustomNetworkManager : NetworkLobbyManager
     {
+        public GameManager Gamemanager;
 
-        List<Player> _players = new List<Player>();
-
-        public List<GameObject> SpawnPoints;
-
-        public IEnumerable<Player> GetPlayers()
+        void Awake()
         {
-            return _players;
-        }
+            Gamemanager = FindObjectOfType<GameManager>();
+        }       
 
         public override bool OnLobbyServerSceneLoadedForPlayer(GameObject lobbyPlayer, GameObject gamePlayer)
         {
-            
-
+            Gamemanager.StartManager();
             return base.OnLobbyServerSceneLoadedForPlayer(lobbyPlayer, gamePlayer);
         }
 
-        void Start()
+        public override void OnLobbyClientSceneChanged(NetworkConnection conn)
         {
-            var newTrans = new GameObject().transform;
+            Gamemanager.StartManager();
+            base.OnLobbyClientSceneChanged(conn);
+        }
 
-            newTrans.position = new Vector3(20, 20, 0);
-            startPositions.Add(newTrans);
+        public override void OnClientDisconnect(NetworkConnection conn)
+        {
+            Gamemanager.ClearPlayers();
+            base.OnClientDisconnect(conn);
+        }
 
+        public override void OnStopServer()
+        {
+            Gamemanager.ClearPlayers();
+            base.OnStopServer();
         }
     }
 }

@@ -1,28 +1,28 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace Assets.Scripts.Spells
 {
-    public class FireballSpell : IProjectile
+    class DashSpell : ISelfCast
     {
-        float ISpell.Damage
+        public bool IsSelfCast
         {
             get
             {
-                switch (_level)
-                {
-                    case 1:
-                        return 10f;
-                    case 2:
-                        return 12f;
+                return true;
+            }
+        }
 
-                    default:
-                        return 10f;
-                }
+        private int _level = 1;
+        public int Level
+        {
+            get
+            {
+                return _level;
             }
         }
 
@@ -30,27 +30,7 @@ namespace Assets.Scripts.Spells
         {
             get
             {
-                return SpellType.Fireball;
-            }
-        }
-
-        private int _level = 1;
-        public int Level { get { return _level; } }
-
-        float ISpell.BaseKnockback
-        {
-            get
-            {
-                switch (_level)
-                {
-                    case 1:
-                        return 700f;
-                    case 2:
-                        return 750f;
-
-                    default:
-                        return 700f;
-                }
+                return SpellType.Dash;
             }
         }
 
@@ -61,9 +41,10 @@ namespace Assets.Scripts.Spells
                 switch (_level)
                 {
                     case 1:
-                        return 10;
+                        return 7;
+
                     case 2:
-                        return 12;
+                        return 9;
 
                     default:
                         return 0;
@@ -71,24 +52,60 @@ namespace Assets.Scripts.Spells
             }
         }
 
-        public bool IsSelfCast
+        public float Damage
         {
             get
             {
-                return false;
+                switch (_level)
+                {
+                    case 1:
+                        return 7.5f;
+
+                    case 2:
+                        return 8.5f;
+
+                    default:
+                        return 10;
+                }
+            }
+        }
+
+        public float BaseKnockback
+        {
+            get
+            {
+                switch (_level)
+                {
+                    case 1:
+                        return 600f;
+
+                    case 2:
+                        return 700f;
+
+                    default:
+                        return 10;
+                }
             }
         }
 
         public float Cooldown { get; set; }
 
-        public void UpgradeSpell()
+        public IEnumerator Execute(GameObject go)
         {
-            _level++;
+            var mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mousepos.z = 0;
+            LeanTween.move(go, mousepos, Vector3.Distance(mousepos,go.transform.position) / 50);
+            yield return null;
         }
 
         public void SetSpellLevel(int level)
         {
             _level = level;
+        }
+
+        public void UpgradeSpell()
+        {
+            _level++;
 
             ResetCooldown();
         }

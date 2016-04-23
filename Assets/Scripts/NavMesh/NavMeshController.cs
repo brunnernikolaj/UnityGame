@@ -13,16 +13,24 @@ public class NavMeshController : Singleton<NavMeshController>
 
     public int ObstacleLayer { get; set; }
     public int WalkableLayer { get; set; }
+    public int ActorSize { get; set; }
 
     public bool ShouldDrawConnections { get; set; }
 
     NavMeshGenerator navMeshGenerator = new NavMeshGenerator();
     NavMesh2D navMesh;
 
+    void Awake()
+    {
+
+    }
+
     public void Start()
     {
+
         ObstacleLayer = 8;
         WalkableLayer = 9;
+        ActorSize = 15;
         BuildMesh();
 
     }
@@ -34,7 +42,7 @@ public class NavMeshController : Singleton<NavMeshController>
     {
         var walkablePoly = FindCollidorPoints(go => go.layer == WalkableLayer);
         var obstaclesPolys = FindCollidorPoints(go => go.layer == ObstacleLayer);
-
+        navMeshGenerator.ActorSize = ActorSize;
         navMesh = navMeshGenerator.Generate(walkablePoly, obstaclesPolys);
 
         GetComponent<MeshFilter>().mesh = navMeshGenerator.Mesh;

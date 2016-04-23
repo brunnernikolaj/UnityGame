@@ -119,7 +119,11 @@ namespace Assets
             {
                 for (int k = i + 2; k < path.Count; k++)
                 {
-                    if (Physics2D.Linecast(path[i], path[k], layerMask).collider == null)
+                    Vector3 relative = path[k] - path[i];
+                    Vector3 movementNormal = Vector3.Normalize(relative);
+                    var direction = new Vector2(movementNormal.x, movementNormal.y);
+                    var col = Physics2D.CircleCast(path[i], 1f, direction,Vector3.Distance(path[i], path[k]), layerMask);
+                    if (col.transform == null)
                     {
                         path.Remove(path[i + 1]);
                     }

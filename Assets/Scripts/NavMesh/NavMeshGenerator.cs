@@ -13,6 +13,8 @@ namespace Assets
 
         public Mesh Mesh { get; private set; }
 
+        public int ActorSize { get; set; }
+
         public NavMeshGenerator()
         {
             Color = Color.blue;
@@ -247,14 +249,14 @@ namespace Assets
             return result;
         }
 
-        private static IEnumerable<List<IntPoint>> ExpandObstacles(IEnumerable<List<IntPoint>> obstaclesPolys)
+        private IEnumerable<List<IntPoint>> ExpandObstacles(IEnumerable<List<IntPoint>> obstaclesPolys)
         {
             ClipperOffset offset = new ClipperOffset();
             var offsetContainer = new List<List<IntPoint>>();
             foreach (var obstacle in obstaclesPolys)
             {
                 offset.AddPath(obstacle, JoinType.jtMiter, EndType.etClosedPolygon);
-                offset.Execute(ref offsetContainer, 10);
+                offset.Execute(ref offsetContainer, ActorSize);
 
                 foreach (var item in offsetContainer)
                 {

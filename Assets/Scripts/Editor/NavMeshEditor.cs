@@ -15,7 +15,7 @@ namespace Assets
             ctrl.WalkableLayer = EditorGUILayout.LayerField("Walkable Layer:", ctrl.WalkableLayer);
             ctrl.ObstacleLayer = EditorGUILayout.LayerField("Obstacle Layer:", ctrl.ObstacleLayer);
 
-            EditorGUILayout.FloatField("Actor Diameter", 0);
+            ctrl.ActorSize = EditorGUILayout.IntField("Actor Diameter", ctrl.ActorSize);
 
             if (GUILayout.Button("Build NavMesh"))
             {
