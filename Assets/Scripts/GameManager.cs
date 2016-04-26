@@ -11,6 +11,7 @@ using Assets.Scripts.Spells;
 public class GameManager : NetworkBehaviour{
 
     private static GameManager _instance;
+    public static GameManager Instance { get { return _instance; } }
 
     public int Rounds;
 
@@ -76,8 +77,11 @@ public class GameManager : NetworkBehaviour{
                 var player = new Player { Name = "Lars", Gold = 50};
                 player.Spells = new Dictionary<KeyCode, ISpell>();
                 player.Spells.Add(KeyCode.A, new FireballSpell());
-
                 if (item.isLocalPlayer)
+                {
+                    localPlayer = player;
+                }
+                if (isServer && item.isServer)
                 {
                     localPlayer = player;
                 }
@@ -87,6 +91,8 @@ public class GameManager : NetworkBehaviour{
             }
 
         }
+
+        playerCount = _players.Count;
     }
 
     public void AddPlayer( Player player)
@@ -116,15 +122,11 @@ public class GameManager : NetworkBehaviour{
     public void PlayerKilled(int killed, int killer)
     {
         //_players[killer].Score++;
-
-        //if (playerCount <= 1)
-        //{
-        //    EndRound();
-        //}
-        //else
-        //{
-        //    playerCount--;
-        //}
+        playerCount--;
+        if (playerCount <= 1)
+        {
+            EndRound();
+        }
     }
 
     public void EndRound()
@@ -133,6 +135,11 @@ public class GameManager : NetworkBehaviour{
         if (Rounds == 0)
         {
             EndGame();
+        }
+        else
+        {
+            playerCount = _players.Count;
+            ChangeScene("ShopScene");
         }
 
         OnRoundStart();

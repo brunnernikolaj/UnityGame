@@ -20,7 +20,14 @@ namespace Assets.Scripts.Util
 
             StartCoroutine(pool.Despawn(exp, 2f));
         }
+
+        void OnLevelWasLoaded(int level)
+        {
+            pool.Clear();
+        }
     }
+
+   
 
     enum EffectType
     {

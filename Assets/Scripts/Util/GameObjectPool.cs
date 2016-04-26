@@ -19,6 +19,11 @@ namespace Assets.Scripts.Util
             Prefab = Resources.Load<GameObject>(PrefabLocation);
         }
 
+        public void Clear()
+        {
+            pool.Clear();
+        }
+
         public GameObject Spawn()
         {
             GameObject go = null;
@@ -36,8 +41,12 @@ namespace Assets.Scripts.Util
         public IEnumerator Despawn(GameObject spawned,float time)
         {
             yield return new WaitForSeconds(time);
-            spawned.SetActive(false);
-            pool.Push(spawned);
+            if (spawned != null)
+            {
+                spawned.SetActive(false);
+                pool.Push(spawned);
+            }
+           
         }
     }
 }

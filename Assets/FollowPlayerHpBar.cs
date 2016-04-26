@@ -19,11 +19,6 @@ public class FollowPlayerHpBar : MonoBehaviour {
         greenBar = images[1];
        
 	}
-
-    void Awake()
-    {
-        DontDestroyOnLoad(gameObject);
-    }
 	
 	// Update is called once per frame
 	void Update () {

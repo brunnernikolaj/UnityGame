@@ -61,6 +61,11 @@ public class PlayerController : NetworkBehaviour
         navMesh = FindObjectOfType<NavMeshController>();
     }
 
+    public void SetupNavMesh()
+    {
+        navMesh = FindObjectOfType<NavMeshController>();
+    }
+
     private void NewRound()
     {
         transform.position = new Vector3(Random.Range(100, 200), Random.Range(100, 200));
@@ -87,10 +92,14 @@ public class PlayerController : NetworkBehaviour
             IsMoving = true;
         }
 
-
     }
 
-
+    [ClientRpc]
+    public void RpcDeath()
+    {
+        StartHealth = 100;
+        GameManager.Instance.PlayerKilled(0, 0);
+    }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
@@ -112,8 +121,6 @@ public class PlayerController : NetworkBehaviour
     {
         if (isServer)
         {
-
-
             StartHealth -= spell.Damage;
             KnockbackMultiplier += 0.10f;
 
@@ -129,7 +136,7 @@ public class PlayerController : NetworkBehaviour
 
     private void HandlePlayerCollision(Vector2 collision, SpellCaster otherPlayer)
     {
-        if (otherPlayer.IsDashing && isClient)
+        if (otherPlayer.IsDashing && isServer)
         {
             StartHealth -= 8;
             RpcHit(collision, (int)SpellType.Dash, 1);
@@ -238,4 +245,10 @@ public class PlayerController : NetworkBehaviour
             }
         }
     }
+
+    void OnDestroy()
+    {
+        
+    }
+
 }

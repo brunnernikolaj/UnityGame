@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Assets.Scripts
 {
-    class SpellManager : Singleton<SpellManager>
+    class SpellManager : MonoBehaviour
     {
         private Dictionary<SpellType, ISpell> Spells;
 
@@ -19,7 +19,7 @@ namespace Assets.Scripts
         }
 
         private static SpellManager _instance;
-
+        public static SpellManager Instance { get { return _instance; } }
 
         void Awake()
         {
