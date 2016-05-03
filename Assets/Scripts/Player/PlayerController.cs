@@ -48,6 +48,16 @@ public class PlayerController : NetworkBehaviour
 
     private FollowPlayerHpBar hpBarFollowScript;
 
+    void OnTriggerEnter2D()
+    {
+        isOnLava = false;
+    }
+
+    void OnTriggerExit2D()
+    {
+        isOnLava = true;
+    }
+
     public void SetupHpBar()
     {
         hpPanel = Instantiate(HpBarPrefab) as GameObject;
@@ -92,6 +102,10 @@ public class PlayerController : NetworkBehaviour
             IsMoving = true;
         }
 
+        if (isOnLava)
+        {
+            StartHealth -= 0.1f;
+        }
     }
 
     [ClientRpc]
@@ -181,8 +195,7 @@ public class PlayerController : NetworkBehaviour
 
     private Vector3 NextPoint;
     private bool IsMoving;
-
-
+    private bool isOnLava;
 
     void Move()
     {
