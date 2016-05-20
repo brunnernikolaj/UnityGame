@@ -79,6 +79,8 @@ namespace Assets.Scripts.Spells
             }
         }
 
+        public int CasterID { get; set; }
+
         public float Cooldown { get; set; }
 
         public void UpgradeSpell()

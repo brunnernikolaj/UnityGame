@@ -74,7 +74,7 @@ public class GameManager : NetworkBehaviour{
         {
             if (item != null)
             {
-                var player = new Player { Name = "Lars", Gold = 50};
+                var player = new Player { Name = "Lars", Gold = 50,Id = playerCount++};
                 player.Spells = new Dictionary<KeyCode, ISpell>();
                 player.Spells.Add(KeyCode.A, new FireballSpell());
                 if (item.isLocalPlayer)
@@ -87,41 +87,33 @@ public class GameManager : NetworkBehaviour{
                 }
 
                 _players.Add(player);
-                //ScoreboardController.Instance.AddPlayer(player);
+                ScoreboardController.Instance.AddPlayer(player);
             }
 
         }
 
-        playerCount = _players.Count;
     }
 
     public void AddPlayer( Player player)
     {
-        CmdPlayerJoined();
+       
     }
 
-    [Command]
-    void CmdPlayerJoined()
-    {
-        //var player = new Player { Name = "Lars" };
-        //_players.Add(player);
-
-        //ScoreboardController.Instance.Clear();
-
-        //foreach (var item in _players)
-        //{
-        //    NetworkServer.Spawn();
-        //}
-    }
 
     public void ChangeScene(string sceneName)
     {
         netManager.ServerChangeScene(sceneName);
     }
 
-    public void PlayerKilled(int killed, int killer)
+    public void addScore(int playerId, int score)
     {
-        //_players[killer].Score++;
+        _players[playerId].Score += score;
+        ScoreboardController.Instance.UpdateScore(playerId, _players[playerId].Score);
+    }
+
+    public void PlayerKilled(int killer)
+    {
+        addScore(killer, 5);
         playerCount--;
         if (playerCount <= 1)
         {

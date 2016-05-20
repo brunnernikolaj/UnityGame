@@ -8,6 +8,8 @@ namespace Assets.Scripts
 {
     public interface ISpell
     {
+        int CasterID { get; set; }
+
         float Damage { get; }
 
         float BaseKnockback { get; }

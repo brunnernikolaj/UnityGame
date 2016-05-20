@@ -16,6 +16,7 @@ public class SpellCaster : NetworkBehaviour {
     public bool IsDashing { get; private set; }
 
     private Player localPlayer;
+    public int playerId;
 
     private SpellManager spellManager;
 
@@ -25,6 +26,7 @@ public class SpellCaster : NetworkBehaviour {
     void Start () {
         playerCtrl = GetComponent<PlayerController>();
         localPlayer = FindObjectOfType<GameManager>().GetLocalPlayer();
+        playerId = localPlayer.Id;
         spellManager = FindObjectOfType<SpellManager>();
 	}
 
@@ -51,6 +53,7 @@ public class SpellCaster : NetworkBehaviour {
             {
                 selectedKey = key;
                 selectedSpell = localPlayer.Spells[key];
+                selectedSpell.CasterID = localPlayer.Id;
             }
         }
 

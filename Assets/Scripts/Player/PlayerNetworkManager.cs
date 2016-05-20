@@ -1,10 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
+using Assets.Scripts.Util;
 
 public class PlayerNetworkManager : NetworkBehaviour
 {
     private PlayerController player;
+    private SpellCaster playerCaster;
 
     // Use this for initialization
     void Start()
@@ -15,16 +17,17 @@ public class PlayerNetworkManager : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-
         if (player.StartHealth <= 0 && isServer)
         {
-            player.RpcDeath();
+            player.RpcDeath(player.lastPlayerThatHit);
         }
     }
 
     public override void OnStartClient()
     {
         player = GetComponent<PlayerController>();
+        playerCaster = GetComponent<SpellCaster>();
+        GetComponent<SpriteRenderer>().color = PlayerColors.getColor(playerCaster.playerId);
         player.SetupHpBar();
         base.OnStartClient();
     }
@@ -39,6 +42,6 @@ public class PlayerNetworkManager : NetworkBehaviour
 
         player.enabled = true;
         player.SetupNavMesh();
-        GetComponent<SpellCaster>().enabled = true;
+        playerCaster.enabled = true;
     }
 }

@@ -82,6 +82,8 @@ namespace Assets.Scripts.Spells
             _level = level;
         }
 
+        public int CasterID { get; set; }
+
         public void UpgradeSpell()
         {
             

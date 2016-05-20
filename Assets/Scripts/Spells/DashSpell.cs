@@ -90,6 +90,8 @@ namespace Assets.Scripts.Spells
 
         public float Cooldown { get; set; }
 
+        public int CasterID{ get; set; }
+
         public IEnumerator Execute(GameObject go)
         {
             var mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);

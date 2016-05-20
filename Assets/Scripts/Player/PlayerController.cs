@@ -109,10 +109,10 @@ public class PlayerController : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void RpcDeath()
+    public void RpcDeath(int killerId)
     {
         StartHealth = 100;
-        GameManager.Instance.PlayerKilled(0, 0);
+        GameManager.Instance.PlayerKilled(killerId);
     }
 
     void OnCollisionEnter2D(Collision2D collision)
@@ -138,13 +138,8 @@ public class PlayerController : NetworkBehaviour
             StartHealth -= spell.Damage;
             KnockbackMultiplier += 0.10f;
 
-            if (StartHealth <= 0)
-            {
-                //GameManager.Instance.PlayerKilled((int)netId.Value,0);
-            }
-
             int spellId = (int)spell.Type;
-            RpcHit(collision.contacts[0].normal, spellId, spell.Level);
+            RpcHit(collision.contacts[0].normal, spellId, spell.Level,spell.CasterID);
         }
     }
 
@@ -153,7 +148,7 @@ public class PlayerController : NetworkBehaviour
         if (otherPlayer.IsDashing && isServer)
         {
             StartHealth -= 8;
-            RpcHit(collision, (int)SpellType.Dash, 1);
+            RpcHit(collision, (int)SpellType.Dash, 1,otherPlayer.playerId);
         }
     }
 
@@ -163,9 +158,10 @@ public class PlayerController : NetworkBehaviour
     /// </summary>
     /// <param name="collision"></param>
     [ClientRpc]
-    void RpcHit(Vector2 collision, int spellIndex, int spellLvl)
+    void RpcHit(Vector2 collision, int spellIndex, int spellLvl, int casterId )
     {
-
+        GameManager.Instance.addScore(casterId, 1);
+        lastPlayerThatHit = casterId;
         isHit = true;
         col = collision;
         spellHitWith = SpellManager.Instance[(SpellType)spellIndex];
@@ -175,6 +171,7 @@ public class PlayerController : NetworkBehaviour
     ISpell spellHitWith;
     bool isHit;
     Vector2 col;
+    public int lastPlayerThatHit;
 
     void FixedUpdate()
     {
