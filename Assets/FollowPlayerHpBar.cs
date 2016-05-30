@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 public class FollowPlayerHpBar : MonoBehaviour {
 
+    //The object to follow
     public GameObject player { get; set; }
 
     public GameObject HpBar;
@@ -11,13 +12,11 @@ public class FollowPlayerHpBar : MonoBehaviour {
     private Image redBar;
     private Image greenBar;
 
-	// Use this for initialization
 	void Start () {
         var images = GetComponentsInChildren<Image>();
 
         redBar = images[0];
-        greenBar = images[1];
-       
+        greenBar = images[1];       
 	}
 	
 	// Update is called once per frame
@@ -30,6 +29,10 @@ public class FollowPlayerHpBar : MonoBehaviour {
         HpBar.transform.localScale = new Vector3(updatedHealth / 100f, 1f);
     }
 
+    /// <summary>
+    /// Fade out the healthbar
+    /// </summary>
+    /// <returns></returns>
     public IEnumerator Fade()
     {
         yield return new WaitForSeconds(2f);
@@ -38,6 +41,9 @@ public class FollowPlayerHpBar : MonoBehaviour {
         greenBar.CrossFadeAlpha(0f, 1f, false);
     }
 
+    /// <summary>
+    /// Show the healthbar
+    /// </summary>
     public void Show()
     {
         redBar.CrossFadeAlpha(1f, 0.1f, false);

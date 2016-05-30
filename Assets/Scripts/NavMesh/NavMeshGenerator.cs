@@ -7,6 +7,9 @@ using UnityEngine;
 
 namespace Assets
 {
+    /// <summary>
+    /// This class takes care of generating a navmesh from two list of points 
+    /// </summary>
     class NavMeshGenerator
     {
         public Color Color { get; set; }
@@ -20,8 +23,15 @@ namespace Assets
             Color = Color.blue;
         }
 
+        /// <summary>
+        /// Generates a navmesh from walkable and obstacle points
+        /// </summary>
+        /// <param name="walkable"></param>
+        /// <param name="blocked"></param>
+        /// <returns></returns>
         public NavMesh2D Generate(IEnumerable<IEnumerable<Vector3>> walkable, IEnumerable<IEnumerable<Vector3>> blocked)
         {
+            //Convert to lists of IntPoint since that is what clipper works on
             var walkablePoly = walkable.Select(list => list.Select(vector => new IntPoint(vector.x, vector.y)).ToList()).ToList();
             var obstaclesPolys = blocked.Select(list => list.Select(vector => new IntPoint(vector.x, vector.y)).ToList());
 
@@ -31,39 +41,47 @@ namespace Assets
 
             List<List<IntPoint>> walkableArea = SubtactPolys(walkablePoly, obstaclesPolys);
 
-            //var walkable2 = new List<List<IntPoint>>
-            //{
-            //    walkableArea
-            //    .Select(x => x.Select(y => Vector2.Scale(y.ToVector2(), new Vector2(0.1f, 0.1f)).ToIntPoint()))
-            //};
+            List<List<Vector3>> meshPoints = ConvertToUnityReadable(walkableArea);
 
-            List<List<Vector3>> walkableArea2 = new List<List<Vector3>>();
+            Polygon poly = Triangulate(walkableArea);
 
+            //Divide all points by 0.1f to get back to the desired size 
+            foreach (var tri in poly.Triangles)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    tri.Points[i] = new TriangulationPoint(Math.Round(tri.Points[i].X * 0.1f, 1), Math.Round(tri.Points[i].Y * 0.1f, 1));
+                }
+            }
+
+            BuildMesh(meshPoints, poly);
+
+            return BuildTriangleMap(poly.Triangles);
+        }
+
+        private static List<List<Vector3>> ConvertToUnityReadable(List<List<IntPoint>> walkableArea)
+        {
+            List<List<Vector3>> unityReadable = new List<List<Vector3>>();
+
+            //Divide all points by 0.1f to get back to the desired size 
             for (int i = 0; i < walkableArea.Count; i++)
             {
                 List<Vector3> temp = new List<Vector3>();
                 for (int k = 0; k < walkableArea[i].Count; k++)
                 {
-                    temp.Add(new Vector3 (walkableArea[i][k].X * 0.1f, walkableArea[i][k].Y * 0.1f));
+                    temp.Add(new Vector3(walkableArea[i][k].X * 0.1f, walkableArea[i][k].Y * 0.1f));
                 }
-                walkableArea2.Add(temp);
+                unityReadable.Add(temp);
             }
 
-            Polygon poly = Triangulate(walkableArea);
-
-            foreach (var tri in poly.Triangles)
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    tri.Points[i] = new TriangulationPoint(Math.Round( tri.Points[i].X * 0.1f, 1), Math.Round(tri.Points[i].Y * 0.1f, 1));
-                }
-            }
-
-            BuildMesh(walkableArea2, poly);
-
-            return BuildTriangleMap(poly.Triangles);
+            return unityReadable;
         }
 
+        /// <summary>
+        /// Merge all walkable polygons into one 
+        /// </summary>
+        /// <param name="walkablePoly"></param>
+        /// <returns></returns>
         private List<List<IntPoint>> MergeWalkable(List<List<IntPoint>> walkablePoly)
         {
             var clipper = new Clipper();
@@ -81,16 +99,12 @@ namespace Assets
         /// <returns></returns>
         private NavMesh2D BuildTriangleMap(IList<DelaunayTriangle> triangles)
         {
-            
-
-            Dictionary<DelaunayTriangle, int> triangleIds = new Dictionary<DelaunayTriangle, int>();
             Dictionary<TriangulationPoint, int> vertexIds = new Dictionary<TriangulationPoint, int>();
             List<TriangulationPoint> vertices = new List<TriangulationPoint>();
 
-            // give every triangle and vertex a unique ID
+            // give every vertex a unique ID
             foreach (var triangle in triangles)
             {
-                triangleIds.Add(triangle, triangleIds.Count);
                 foreach (var vertex in triangle.Points)
                 {
                     if (!vertexIds.ContainsKey(vertex))
@@ -123,17 +137,16 @@ namespace Assets
             foreach (var triangle in triangles)
             {
                 var edges = FindEdges(triangle);
-
                 int index = 0;
 
                 foreach (var edge in edges)
-                {                    
+                {
                     foreach (var triangle2 in edgeToTriangles[edge])
                     {
                         if (triangle2.IsInterior)
                         {
-                            triangle.Neighbors[index] = triangle2;                          
-                        }                       
+                            triangle.Neighbors[index] = triangle2;
+                        }
                     }
                     index++;
                 }
@@ -167,6 +180,7 @@ namespace Assets
         /// <returns></returns>
         private Mesh BuildMesh(List<List<Vector3>> walkableArea, Polygon poly)
         {
+            //Select all vertices
             var verts = walkableArea
                             .SelectMany(x => x)
                             .ToList();
@@ -174,29 +188,21 @@ namespace Assets
             //Dictionary With vertices as keys and their index as value
             var dict = verts
                 .Select((vert, index) => new { key = vert, value = index })
-                .ToDictionary(k => new Vector3(k.key.x,k.key.y,0), v => v.value);
+                .ToDictionary(k => new Vector3(k.key.x, k.key.y, 0), v => v.value);
 
+            //Build an array of triangles
             var triangles = poly.Triangles
                 .SelectMany(x => x.Points)
                 .Select(y => dict.Where(x => new Vector3(x.Key.x, x.Key.y, 0) == new Vector3((float)y.X, (float)y.Y, 0)).FirstOrDefault().Value)
                 .ToArray();
 
-
-            //foreach (var item in poly.Triangles.SelectMany(x => x.Points))
-            //{
-            //    var vector = new Vector3((float)item.X, (float)item.Y, 0);
-            //    var it = dict.Where(x => new Vector3(x.Key.x,x.Key.y,0) == vector).First();
-            //    Debug.Log("hi");
-            //}
-
-
+            //Build an array of colors
             var colors = verts
                 .Select(x => Color)
                 .ToArray();
 
             // Create the mesh
             Mesh msh = new Mesh();
-
             msh.vertices = verts.ToArray();
             msh.colors = colors;
             msh.triangles = triangles;
@@ -208,6 +214,11 @@ namespace Assets
             return msh;
         }
 
+        /// <summary>
+        /// Triangulate walkable area using Poly2Tri
+        /// </summary>
+        /// <param name="walkableArea"></param>
+        /// <returns></returns>
         private Polygon Triangulate(List<List<IntPoint>> walkableArea)
         {
             //Obstacles
@@ -230,6 +241,12 @@ namespace Assets
             return poly;
         }
 
+        /// <summary>
+        /// Subtact obstacle polys from walkable polys
+        /// </summary>
+        /// <param name="walkablePoly"></param>
+        /// <param name="obstaclesPolys"></param>
+        /// <returns></returns>
         private static List<List<IntPoint>> SubtactPolys(List<List<IntPoint>> walkablePoly, IEnumerable<List<IntPoint>> obstaclesPolys)
         {
             var clipper = new Clipper();
@@ -249,6 +266,11 @@ namespace Assets
             return result;
         }
 
+        /// <summary>
+        /// Expand obstacles based on actor size. to make space for the actor
+        /// </summary>
+        /// <param name="obstaclesPolys"></param>
+        /// <returns></returns>
         private IEnumerable<List<IntPoint>> ExpandObstacles(IEnumerable<List<IntPoint>> obstaclesPolys)
         {
             ClipperOffset offset = new ClipperOffset();
@@ -277,7 +299,10 @@ namespace Assets
             return isClockwise;
         }
 
-        private class Edge :IEquatable<Edge>
+        /// <summary>
+        /// This class repesent a edge on a triangle 
+        /// </summary>
+        private class Edge : IEquatable<Edge>
         {
             public TriangulationPoint vertex1 { get; set; }
             public TriangulationPoint vertex2 { get; set; }

@@ -10,7 +10,6 @@ using System;
 
 public class ShopMenu : MonoBehaviour
 {
-
     public Text GoldText;
 
     public Button FireballUpgradeBtn;
@@ -73,6 +72,7 @@ public class ShopMenu : MonoBehaviour
         var tobeDisabled = purchasableSpells.Keys.Where(x => x.Key == spell.Key).ToList();
         tobeDisabled.Remove(spell);
 
+        //Disable all spells that use the same key
         foreach (var tempSpell in tobeDisabled)
         {
             tempSpell.IsDisabled = true;
@@ -84,6 +84,7 @@ public class ShopMenu : MonoBehaviour
 
     private void UpdateButtons()
     {
+        //Update buttons
         foreach (var spellUi in purchasableSpells.Keys)
         {
             if (!spellUi.IsDisabled)
@@ -97,7 +98,6 @@ public class ShopMenu : MonoBehaviour
         GoldText.text = localPlayer.Gold.ToString();
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Tab))
@@ -105,5 +105,4 @@ public class ShopMenu : MonoBehaviour
             ShopUi.enabled = !ShopUi.enabled;
         }
     }
-
 }

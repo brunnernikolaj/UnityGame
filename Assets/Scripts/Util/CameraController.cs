@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// This class makes sure the camera stays inside the playing area
+/// </summary>
 public class CameraController : MonoBehaviour
 {
-
     public int Boundary; // distance from edge scrolling starts
     public int speed;
     private int theScreenWidth;
@@ -27,20 +29,14 @@ public class CameraController : MonoBehaviour
         var horzExtent = (vertExtent * Screen.width / Screen.height);
 
         minX = horzExtent;
-        maxX = mapX;
+        maxX = mapX - minX ;
         minY = vertExtent;
-        maxY = mapY;
+        maxY = mapY - horzExtent / 2;
     }
 
     // Update is called once per frame
     void Update()
     {
-        //if (Input.GetKeyDown(KeyCode.)
-        //{
-
-
-        //}
-
         if (Input.mousePosition.x > theScreenWidth - Boundary)
         {
             transform.position = Vector3.Lerp(transform.position, new Vector3(transform.position.x + speed, transform.position.y,-10) , Time.deltaTime); // move on +X axis

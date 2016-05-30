@@ -7,10 +7,11 @@ using UnityEngine;
 
 namespace Assets
 {
+    /// <summary>
+    /// This class encapsulate the A* pathfinding algorithm working on a navmesh
+    /// </summary>
     class NavMesh2D
     {
-        //private Stack<>
-
         public List<DelaunayTriangle> Triangles { get; private set; }
 
         public NavMesh2D(List<DelaunayTriangle> triangles)
@@ -41,7 +42,7 @@ namespace Assets
             {
                 var cheapestNode = open.OrderBy(x => x.FCost).First();
 
-                foreach (var item in FindNeighbourPoints2(cheapestNode.Point.ToTriPoint()))
+                foreach (var item in FindNeighbourPoints(cheapestNode.Point.ToTriPoint()))
                 {
                     item.Parent = cheapestNode;
 
@@ -66,11 +67,16 @@ namespace Assets
                     return BuildPath(endPoint, cheapestNode);
                 }
             }
-            //var neighbourPoints = FindNeighbourPoints(startTriangle, next.Key);
             return null;
-
         }
 
+        /// <summary>
+        /// Finds the best start node on the first triangle 
+        /// </summary>
+        /// <param name="startPoint"></param>
+        /// <param name="endPoint"></param>
+        /// <param name="startTriangle"></param>
+        /// <returns></returns>
         private static TrianglePath FindStartNode(Vector2 startPoint, Vector2 endPoint, DelaunayTriangle startTriangle)
         {
             var startPoints = startTriangle.Points.Select(x => new TrianglePath { Point = x.ToVector2() });
@@ -99,6 +105,12 @@ namespace Assets
             return startNode;
         }
 
+        /// <summary>
+        /// Builds a List of the path to walk
+        /// </summary>
+        /// <param name="endPoint"></param>
+        /// <param name="item"></param>
+        /// <returns></returns>
         private static List<Vector2> BuildPath(Vector2 endPoint, TrianglePath item)
         {
             var node = item;
@@ -112,7 +124,18 @@ namespace Assets
 
 
             path.Reverse();
+            SmoothPath(path);
+            path.Reverse();
+            return path;
+        }
 
+        /// <summary>
+        /// Try and smooth path by CircleCasting from path[n] to path[n + 2]
+        /// </summary>
+        /// <param name="path"></param>
+        private static void SmoothPath(List<Vector2> path)
+        {
+            //The layer mask for our obstacle layer
             int layerMask = 1 << 8;
 
             for (int i = 0; i < path.Count - 1; i++)
@@ -122,7 +145,9 @@ namespace Assets
                     Vector3 relative = path[k] - path[i];
                     Vector3 movementNormal = Vector3.Normalize(relative);
                     var direction = new Vector2(movementNormal.x, movementNormal.y);
-                    var col = Physics2D.CircleCast(path[i], 1f, direction,Vector3.Distance(path[i], path[k]), layerMask);
+
+                    var col = Physics2D.CircleCast(path[i], 1f, direction, Vector3.Distance(path[i], path[k]), layerMask);
+
                     if (col.transform == null)
                     {
                         path.Remove(path[i + 1]);
@@ -134,11 +159,9 @@ namespace Assets
                 }
 
             }
-            path.Reverse();
-            return path;
         }
 
-        private IEnumerable<TrianglePath> FindNeighbourPoints2(TriangulationPoint startPoint)
+        private IEnumerable<TrianglePath> FindNeighbourPoints(TriangulationPoint startPoint)
         {
             foreach (var triangle in Triangles.Where(x => x.Points.Contains(startPoint)))
             {
@@ -149,21 +172,11 @@ namespace Assets
             }
         }
 
-        private IEnumerable<TrianglePath> FindNeighbourPoints(DelaunayTriangle triangle, Vector2 next)
-        {
-
-            foreach (var neighbour in triangle.Neighbors)
-            {
-                foreach (var point in neighbour.Points)
-                {
-
-                    yield return new TrianglePath { Point = point.ToVector2() };
-
-                }
-            }
-
-        }
-
+        /// <summary>
+        /// Find the triangle that position is inside
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns></returns>
         public DelaunayTriangle FindTriangle(Vector2 position)
         {
             foreach (var triangle in Triangles)
@@ -179,6 +192,14 @@ namespace Assets
             return (float)((p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y));
         }
 
+        /// <summary>
+        /// Find if pt is inside triangle
+        /// </summary>
+        /// <param name="pt"></param>
+        /// <param name="v1"></param>
+        /// <param name="v2"></param>
+        /// <param name="v3"></param>
+        /// <returns></returns>
         bool PointInTriangle(Vector2 pt, Vector2 v1, Vector2 v2, Vector2 v3)
         {
             bool b1, b2, b3;
@@ -189,84 +210,11 @@ namespace Assets
 
             return ((b1 == b2) && (b2 == b3));
         }
-
-        // Return True if the point is in the polygon.
-        private bool PointInPolygon(IntPoint[] polygon, float X, float Y)
-        {
-            // Get the angle between the point and the
-            // first and last vertices.
-            int max_point = polygon.Length - 1;
-            float total_angle = GetAngle(
-                polygon[max_point].X, polygon[max_point].Y,
-                X, Y,
-                polygon[0].X, polygon[0].Y);
-
-            // Add the angles from the point
-            // to each other pair of vertices.
-            for (int i = 0; i < max_point; i++)
-            {
-                total_angle += GetAngle(
-                    polygon[i].X, polygon[i].Y,
-                    X, Y,
-                    polygon[i + 1].X, polygon[i + 1].Y);
-            }
-
-            // The total angle should be 2 * PI or -2 * PI if
-            // the point is in the polygon and close to zero
-            // if the point is outside the polygon.
-            return (Mathf.Abs(total_angle) > 0.000001);
-        }
-
-        private float GetAngle(float Ax, float Ay,
-        float Bx, float By, float Cx, float Cy)
-        {
-            // Get the dot product.
-            float dot_product = DotProduct(Ax, Ay, Bx, By, Cx, Cy);
-
-            // Get the cross product.
-            float cross_product = CrossProductLength(Ax, Ay, Bx, By, Cx, Cy);
-
-            // Calculate the angle.
-            return Mathf.Atan2(cross_product, dot_product);
-        }
-
-        private float DotProduct(float Ax, float Ay,
-        float Bx, float By, float Cx, float Cy)
-        {
-            // Get the vectors' coordinates.
-            float BAx = Ax - Bx;
-            float BAy = Ay - By;
-            float BCx = Cx - Bx;
-            float BCy = Cy - By;
-
-            // Calculate the dot product.
-            return (BAx * BCx + BAy * BCy);
-        }
-
-        public float CrossProductLength(float Ax, float Ay,
-        float Bx, float By, float Cx, float Cy)
-        {
-            // Get the vectors' coordinates.
-            float BAx = Ax - Bx;
-            float BAy = Ay - By;
-            float BCx = Cx - Bx;
-            float BCy = Cy - By;
-
-            // Calculate the Z coordinate of the cross product.
-            return (BAx * BCy - BAy * BCx);
-        }
-
-        internal class Path
-        {
-            public Vector2 Position { get; set; }
-
-            public Path Parent { get; set; }
-        }
-
-
-
     }
 
+    /// <summary>
+    /// Class used for A* pathfinding
+    /// </summary>
     internal class TrianglePath : IEquatable<TrianglePath>
     {
         public float GCost { get; set; }

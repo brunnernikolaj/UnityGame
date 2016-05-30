@@ -37,8 +37,7 @@ public class SpellCaster : NetworkBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-
-
+        //Update cooldown for spells
         foreach (var cooldown in localPlayer.Spells)
         {
             if (cooldown.Value.Cooldown >= 0)
@@ -47,6 +46,7 @@ public class SpellCaster : NetworkBehaviour {
             }
         }
 
+        //Check if a spell was clicked and select it if cooldown is 0 
         foreach (var key in localPlayer.Spells.Keys)
         {
             if (Input.GetKeyDown(key) && localPlayer.Spells[key].Cooldown <= 0)
@@ -57,30 +57,35 @@ public class SpellCaster : NetworkBehaviour {
             }
         }
 
+        //If a spell was selected and right mouse button pressed
         if (Input.GetMouseButtonDown(0) && selectedSpell != null)
         {
-            var mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mousepos.z = 0;
-            if (selectedSpell is ISelfCast)
-            {
-                if (selectedSpell is DashSpell)
-                {
-                    IsDashing = true;
-                }
+            HandleSpellCasting();
+        }
 
-                playerCtrl.StopMoving();
-                StartCoroutine((selectedSpell as ISelfCast).Execute(gameObject));
+    }
 
-                
-            }
-            else
+    private void HandleSpellCasting()
+    {
+        var mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousepos.z = 0;
+        if (selectedSpell is ISelfCast)
+        {
+            if (selectedSpell is DashSpell)
             {
-                CmdFire(mousepos, (int)selectedSpell.Type, selectedSpell.Level);
+                IsDashing = true;
             }
-            localPlayer.Spells[selectedKey].ResetCooldown();
-            selectedSpell = null;
-        }    
-        
+
+            playerCtrl.StopMoving();
+            StartCoroutine((selectedSpell as ISelfCast).Execute(gameObject));
+        }
+        else
+        {
+            CmdFire(mousepos, (int)selectedSpell.Type, selectedSpell.Level);
+        }
+
+        localPlayer.Spells[selectedKey].ResetCooldown();
+        selectedSpell = null;
     }
 
     [Command]

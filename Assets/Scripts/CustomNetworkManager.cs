@@ -13,9 +13,7 @@ namespace Assets.Scripts
         public GameManager Gamemanager;
 
         private static CustomNetworkManager _instance;
-
-        private bool isManagerStarted = false;
-
+          
         void Awake()
         {
             //if we don't have an [_instance] set yet
@@ -26,27 +24,6 @@ namespace Assets.Scripts
                 Destroy(this.gameObject);
 
         }
-
-        void Start()
-        {
-            //if (FindObjectsOfType<CustomNetworkManager>() != null)
-            //{
-            //    Destroy(gameObject);
-            //}
-        }
-
-
-        //public override bool OnLobbyServerSceneLoadedForPlayer(GameObject lobbyPlayer, GameObject gamePlayer)
-        //{
-        //    if (!isManagerStarted)
-        //    {
-        //      Gamemanager.StartManager();
-        //        isManagerStarted = true;
-        //    }
-            
-        //    return base.OnLobbyServerSceneLoadedForPlayer(lobbyPlayer, gamePlayer);
-        //}
-
 
         public override void OnStartClient(NetworkClient lobbyClient)
         {
@@ -61,12 +38,5 @@ namespace Assets.Scripts
             base.OnClientDisconnect(conn);
             Destroy(gameObject);
         }
-
-        //public override void OnStopServer()
-        //{
-        //    //NetworkServer.Reset();
-        //    Gamemanager.ClearPlayers();
-        //    base.OnStopServer();
-        //}
     }
 }

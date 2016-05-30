@@ -3,16 +3,14 @@ using System.Collections;
 using UnityEngine.Networking;
 using Assets.Scripts.Util;
 
+/// <summary>
+/// This class takes care of enabling scripts on the local player. and checking health
+/// </summary>
 public class PlayerNetworkManager : NetworkBehaviour
 {
     private PlayerController player;
     private SpellCaster playerCaster;
-
-    // Use this for initialization
-    void Start()
-    {
-        //player = GetComponent<PlayerController>();
-    }
+    private int playerId;
 
     // Update is called once per frame
     void Update()
@@ -27,8 +25,12 @@ public class PlayerNetworkManager : NetworkBehaviour
     {
         player = GetComponent<PlayerController>();
         playerCaster = GetComponent<SpellCaster>();
-        GetComponent<SpriteRenderer>().color = PlayerColors.getColor(playerCaster.playerId);
+        playerId = FindObjectOfType<GameManager>().getPlayerId();
+        GetComponent<SpriteRenderer>().color = PlayerColors.getColor(playerId);
         player.SetupHpBar();
+
+        GameManager.OnRoundStart += NewRound;
+
         base.OnStartClient();
     }
 
@@ -39,9 +41,15 @@ public class PlayerNetworkManager : NetworkBehaviour
 
     public override void OnStartLocalPlayer()
     {
-
         player.enabled = true;
         player.SetupNavMesh();
         playerCaster.enabled = true;
+    }
+
+    private void NewRound(string sceneName)
+    {
+        transform.position = sceneName == "scene1" ?
+            PlayerStartPositions.getPos(playerId) :
+            PlayerStartPositions.getShopPos(playerId);
     }
 }

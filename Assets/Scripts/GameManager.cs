@@ -15,8 +15,6 @@ public class GameManager : NetworkBehaviour{
 
     public int Rounds;
 
-    public delegate void RoundStart();
-
     List<Player> _players = new List<Player>();
 
     public void ClearPlayers()
@@ -29,6 +27,12 @@ public class GameManager : NetworkBehaviour{
         return _players;
     }
 
+    private int currentPlayerId;
+    public int getPlayerId()
+    {
+        return currentPlayerId++;
+    }
+
     public Player GetLocalPlayer()
     {
         if (_players.Count == 0)
@@ -39,6 +43,7 @@ public class GameManager : NetworkBehaviour{
         return localPlayer;
     }
 
+    public delegate void RoundStart(string sceneName);
     public static event RoundStart OnRoundStart;
 
     private Player localPlayer;
@@ -91,18 +96,12 @@ public class GameManager : NetworkBehaviour{
             }
 
         }
-
     }
-
-    public void AddPlayer( Player player)
-    {
-       
-    }
-
 
     public void ChangeScene(string sceneName)
     {
         netManager.ServerChangeScene(sceneName);
+        OnRoundStart(sceneName);
     }
 
     public void addScore(int playerId, int score)
@@ -133,8 +132,6 @@ public class GameManager : NetworkBehaviour{
             playerCount = _players.Count;
             ChangeScene("ShopScene");
         }
-
-        OnRoundStart();
     }
 
     private void EndGame()

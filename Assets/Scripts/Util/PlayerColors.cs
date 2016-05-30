@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace Assets.Scripts.Util
 {
+    /// <summary>
+    /// This class is used to color the players
+    /// </summary>
     class PlayerColors
     {
         public static Color getColor(int id)

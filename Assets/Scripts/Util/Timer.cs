@@ -4,6 +4,9 @@ using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/// <summary>
+/// This class represents a timer in the shop scene. That will change scene to the main scene
+/// </summary>
 public class Timer : NetworkBehaviour {
 
     public float CountdownTime;

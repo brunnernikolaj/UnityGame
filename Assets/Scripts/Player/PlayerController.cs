@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using UnityEngine.Networking;
 using Assets;
 using Assets.Scripts;
-using UnityEngine.UI;
+using Assets.Scripts.Util;
 
+/// <summary>
+/// This class takes care of moving the player object and acting upon collisions
+/// </summary>
 public class PlayerController : NetworkBehaviour
 {
-    public float MovementSpeed;
-
     [SyncVar(hook = "OnStartHealthChange")]
     public float StartHealth;
     private void OnStartHealthChange(float updatedHealth)
@@ -22,8 +23,11 @@ public class PlayerController : NetworkBehaviour
     [SyncVar]
     public float KnockbackMultiplier;
 
+    public int lastPlayerThatHit;
+    public float MovementSpeed;
+
     public GameObject HpBarPrefab;
-    private GameObject hpPanel;
+    private FollowPlayerHpBar hpBarFollowScript;
 
     private Stack<Vector2> path;
     private Rigidbody2D rbody;
@@ -41,29 +45,7 @@ public class PlayerController : NetworkBehaviour
             //HpText.text = "Current Hp: " + StartHealth;
         }
         path = new Stack<Vector2>();
-        rbody = GetComponent<Rigidbody2D>();
-
-        GameManager.OnRoundStart += NewRound;       
-    }
-
-    private FollowPlayerHpBar hpBarFollowScript;
-
-    void OnTriggerEnter2D()
-    {
-        isOnLava = false;
-    }
-
-    void OnTriggerExit2D()
-    {
-        isOnLava = true;
-    }
-
-    public void SetupHpBar()
-    {
-        hpPanel = Instantiate(HpBarPrefab) as GameObject;
-        hpBarFollowScript = hpPanel.GetComponent<FollowPlayerHpBar>();
-        hpBarFollowScript.player = gameObject;
-        StartCoroutine(hpBarFollowScript.Fade());
+        rbody = GetComponent<Rigidbody2D>(); 
     }
 
     void OnLevelWasLoaded(int level)
@@ -71,18 +53,8 @@ public class PlayerController : NetworkBehaviour
         navMesh = FindObjectOfType<NavMeshController>();
     }
 
-    public void SetupNavMesh()
-    {
-        navMesh = FindObjectOfType<NavMeshController>();
-    }
-
-    private void NewRound()
-    {
-        transform.position = new Vector3(Random.Range(100, 200), Random.Range(100, 200));
-    }
 
 
-    // Update is called once per frame
     void Update()
     {
         if (Input.GetMouseButtonDown(1))
@@ -99,7 +71,7 @@ public class PlayerController : NetworkBehaviour
             path = new Stack<Vector2>(tempPath);
 
             NextPoint = path.Pop();
-            IsMoving = true;
+            isMoving = true;
         }
 
         if (isOnLava)
@@ -128,7 +100,6 @@ public class PlayerController : NetworkBehaviour
             var spell = collision.gameObject.GetComponent<ISpellObject>().Spell as IProjectile;
             HandleSpellCollision(collision, spell);
         }
-
     }
 
     private void HandleSpellCollision(Collision2D collision, IProjectile spell)
@@ -152,7 +123,6 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-
     /// <summary>
     /// Called by the server when someones hit
     /// </summary>
@@ -163,19 +133,14 @@ public class PlayerController : NetworkBehaviour
         GameManager.Instance.addScore(casterId, 1);
         lastPlayerThatHit = casterId;
         isHit = true;
-        col = collision;
+        collisionPoint = collision;
         spellHitWith = SpellManager.Instance[(SpellType)spellIndex];
         spellHitWith.SetSpellLevel(spellLvl);
     }
 
-    ISpell spellHitWith;
-    bool isHit;
-    Vector2 col;
-    public int lastPlayerThatHit;
-
     void FixedUpdate()
     {
-        if (IsMoving)
+        if (isMoving)
             Move();
 
         if (isHit)
@@ -184,26 +149,24 @@ public class PlayerController : NetworkBehaviour
 
     private void KnockBack()
     {
-        hpBarFollowScript.Show();
-        var ridgedBody = GetComponent<Rigidbody2D>();
-        ridgedBody.AddForce(col * (spellHitWith.BaseKnockback * KnockbackMultiplier));
+        rbody.AddForce(collisionPoint * (spellHitWith.BaseKnockback * KnockbackMultiplier));
         isHit = false;
     }
 
+    private ISpell spellHitWith;
     private Vector3 NextPoint;
-    private bool IsMoving;
+    private Vector2 collisionPoint;
+    private bool isHit;
+    private bool isMoving;
     private bool isOnLava;
 
     void Move()
     {
-
         SmoothPath();
-
 
         Vector3 relative = NextPoint - transform.position;
         Vector3 movementNormal = Vector3.Normalize(relative);
         var distance = Vector3.Distance(transform.position, NextPoint);
-        float targetAngle = Mathf.Atan2(relative.y, relative.x) * Mathf.Rad2Deg - 90;
 
         if (distance < 0.2)
         {
@@ -212,20 +175,19 @@ public class PlayerController : NetworkBehaviour
                 StopMoving();
                 return;
             }
-
             NextPoint = path.Pop();
-
         }
         else
         {
             rbody.AddForce(new Vector2(movementNormal.x, movementNormal.y) * MovementSpeed, ForceMode2D.Force);
         }
+        float targetAngle = transform.AngleBetween(NextPoint) - 90;
         transform.rotation = Quaternion.Euler(0, 0, targetAngle);
     }
 
     public void StopMoving()
     {
-        IsMoving = false;
+        isMoving = false;
         rbody.velocity = Vector3.zero;
     }
 
@@ -245,6 +207,7 @@ public class PlayerController : NetworkBehaviour
             Vector3 movementNormal = Vector3.Normalize(relative);
             var direction = new Vector2(movementNormal.x, movementNormal.y);
             var col = Physics2D.CircleCast(transform.position, 1f, direction, Vector3.Distance(transform.position, nextPoint), layerMask);
+
             if (col.transform == null)
             {
                 NextPoint = path.Pop();
@@ -256,9 +219,27 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    void OnDestroy()
+    public void SetupNavMesh()
     {
-        
+        navMesh = FindObjectOfType<NavMeshController>();
     }
 
+    public void SetupHpBar()
+    {
+        GameObject hpPanel = Instantiate(HpBarPrefab) as GameObject;
+        hpBarFollowScript = hpPanel.GetComponent<FollowPlayerHpBar>();
+        //Make hpBar follow player
+        hpBarFollowScript.player = gameObject;
+        StartCoroutine(hpBarFollowScript.Fade());
+    }
+
+    void OnTriggerEnter2D()
+    {
+        isOnLava = false;
+    }
+
+    void OnTriggerExit2D()
+    {
+        isOnLava = true;
+    }
 }

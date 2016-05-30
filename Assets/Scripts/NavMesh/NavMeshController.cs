@@ -10,7 +10,6 @@ using System;
 [RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
 public class NavMeshController : Singleton<NavMeshController>
 {
-
     public int ObstacleLayer { get; set; }
     public int WalkableLayer { get; set; }
     public int ActorSize { get; set; }
@@ -20,14 +19,8 @@ public class NavMeshController : Singleton<NavMeshController>
     NavMeshGenerator navMeshGenerator = new NavMeshGenerator();
     NavMesh2D navMesh;
 
-    void Awake()
-    {
-
-    }
-
     public void Start()
     {
-
         ObstacleLayer = 8;
         WalkableLayer = 9;
         ActorSize = 15;
@@ -60,6 +53,7 @@ public class NavMeshController : Singleton<NavMeshController>
                 yield return go.GetComponent<PolygonCollider2D>().points.Select(point => Vector3.Scale(go.transform.TransformPoint(point), new Vector2(10,10)));
     }
 
+    //Used for editor testing
     public GameObject Location;
     public GameObject Target;
     List<Vector2> path;

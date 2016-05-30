@@ -7,6 +7,10 @@ using UnityEngine;
 
 namespace Assets.Scripts
 {
+    /// <summary>
+    /// This class is used to find spells from a enum when sent over the network.
+    /// This class also contains spell prefabs
+    /// </summary>
     class SpellManager : MonoBehaviour
     {
         private Dictionary<SpellType, ISpell> Spells;
@@ -56,7 +60,7 @@ namespace Assets.Scripts
 
         internal GameObject GetSpell(int spellIndex)
         {
-            return SpellPrefabs[0];
+            return SpellPrefabs[spellIndex];
         }
     }
 
