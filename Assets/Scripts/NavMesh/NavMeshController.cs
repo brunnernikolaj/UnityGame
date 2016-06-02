@@ -23,7 +23,7 @@ public class NavMeshController : Singleton<NavMeshController>
     {
         ObstacleLayer = 8;
         WalkableLayer = 9;
-        ActorSize = 15;
+        ActorSize = 10;
         BuildMesh();
 
     }

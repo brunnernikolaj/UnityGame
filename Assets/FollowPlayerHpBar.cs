@@ -36,9 +36,11 @@ public class FollowPlayerHpBar : MonoBehaviour {
     public IEnumerator Fade()
     {
         yield return new WaitForSeconds(2f);
-
-        redBar.CrossFadeAlpha(0f, 1f, false);
-        greenBar.CrossFadeAlpha(0f, 1f, false);
+        if (redBar != null)
+        {
+            redBar.CrossFadeAlpha(0f, 1f, false);
+            greenBar.CrossFadeAlpha(0f, 1f, false);
+        }
     }
 
     /// <summary>

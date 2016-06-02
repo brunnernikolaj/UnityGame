@@ -15,14 +15,11 @@ namespace Assets
 
         public KeyCode Key { get; set; }
 
-        public bool IsDisabled { get; set; }
-
         public PurchasableSpell(Button btn, Text text, KeyCode key)
         {
             PurchaseButton = btn;
             CostText = text;
             Key = key;
-            IsDisabled = false;
         }
 
         public override int GetHashCode()

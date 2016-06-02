@@ -32,10 +32,10 @@ namespace Assets.Scripts
                 _instance = this;
             //otherwise, if we do, kill this thing
             else
-                Destroy(this.gameObject);
+                Destroy(gameObject);
 
 
-            DontDestroyOnLoad(this.gameObject);
+            DontDestroyOnLoad(gameObject);
         }
 
         public SpellManager()
@@ -43,6 +43,7 @@ namespace Assets.Scripts
             Spells = new Dictionary<SpellType, ISpell>(new SpellComparer());
             Spells.Add(SpellType.Fireball, new FireballSpell());
             Spells.Add(SpellType.Dash, new DashSpell());
+            Spells.Add(SpellType.HomingOrb, new HomingOrbSpell());
         }        
 
         internal class SpellComparer : IEqualityComparer<SpellType>
@@ -58,7 +59,7 @@ namespace Assets.Scripts
             }
         }
 
-        internal GameObject GetSpell(int spellIndex)
+        public GameObject GetSpell(int spellIndex)
         {
             return SpellPrefabs[spellIndex];
         }
@@ -67,6 +68,7 @@ namespace Assets.Scripts
     public enum SpellType
     {
         Fireball,
+        HomingOrb,
         Dash
     };
 }

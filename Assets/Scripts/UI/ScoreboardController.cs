@@ -8,16 +8,26 @@ using System.Collections.Generic;
 using UnityEngine.Networking;
 using Assets.Scripts.Util;
 
-public class ScoreboardController : Singleton<ScoreboardController> {
+public class ScoreboardController : MonoBehaviour {
 
     public GameObject scoreEntryPrefab;
     public GameObject Container;
 
     private List<GameObject> _scores = new List<GameObject>();
 
-	// Use this for initialization
-	void Start () {
-        DontDestroyOnLoad(this);
+    private static ScoreboardController _instance;
+    public static ScoreboardController Instance { get { return _instance; } }
+
+    // Use this for initialization
+    void Awake () {
+        //if we don't have an [_instance] set yet
+        if (!_instance)
+            _instance = this;
+        //otherwise, if we do, kill this thing
+        else
+            Destroy(this.gameObject);
+
+        DontDestroyOnLoad(gameObject);
 	}
 
     public GameObject AddPlayer(Player player)
@@ -35,6 +45,13 @@ public class ScoreboardController : Singleton<ScoreboardController> {
         _scores.Add(go);
 
         return go;
+    }
+
+    void OnLevelWasLoaded(int level)
+    {
+        if (level == 0)
+            Destroy(gameObject);
+
     }
 
     public void UpdateScore(int playerId, int score)

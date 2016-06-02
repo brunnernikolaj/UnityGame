@@ -17,7 +17,7 @@ namespace Assets.Scripts.Spells
             }
         }
 
-        private int _level = 1;
+        private int _level;
         public int Level
         {
             get
@@ -40,10 +40,14 @@ namespace Assets.Scripts.Spells
             {
                 switch (_level)
                 {
+                    case 0:
+                        return 6;
                     case 1:
                         return 7;
 
                     case 2:
+                        return 8;
+                    case 3:
                         return 9;
 
                     default:
@@ -92,6 +96,14 @@ namespace Assets.Scripts.Spells
 
         public int CasterID{ get; set; }
 
+        public string IconName
+        {
+            get
+            {
+                return "Dash";
+            }
+        }
+
         public IEnumerator Execute(GameObject go)
         {
             var mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -120,7 +132,7 @@ namespace Assets.Scripts.Spells
                     Cooldown = 4;
                     break;
                 case 2:
-                    Cooldown = 5;
+                    Cooldown = 3.5f;
                     break;
             }
         }

@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 
 namespace Assets.Scripts.Spells
 {
-    public class FireballSpell : IProjectile
+    public class FireballSpell : ISpell
     {
         float ISpell.Damage
         {
@@ -34,7 +34,7 @@ namespace Assets.Scripts.Spells
             }
         }
 
-        private int _level = 1;
+        private int _level;
         public int Level { get { return _level; } }
 
         float ISpell.BaseKnockback
@@ -60,6 +60,8 @@ namespace Assets.Scripts.Spells
             {
                 switch (_level)
                 {
+                    case 0:
+                        return 8;
                     case 1:
                         return 10;
                     case 2:
@@ -83,6 +85,14 @@ namespace Assets.Scripts.Spells
 
         public float Cooldown { get; set; }
 
+        public string IconName
+        {
+            get
+            {
+                return "Fireball";
+            }
+        }
+
         public void UpgradeSpell()
         {
             _level++;
@@ -99,6 +109,9 @@ namespace Assets.Scripts.Spells
         {
             switch (_level)
             {
+                case 0:
+                    Cooldown = 4;
+                    break;
                 case 1:
                     Cooldown = 4;
                     break;

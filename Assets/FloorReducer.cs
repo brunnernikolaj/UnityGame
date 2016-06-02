@@ -36,6 +36,6 @@ public class FloorReducer : MonoBehaviour {
     private void Shrink()
     {
         var newScaleValue = new Vector3(transform.localScale.x - ShrinkAmount, transform.localScale.y - ShrinkAmount);
-        LeanTween.scale(gameObject, newScaleValue, 1f );
+        LeanTween.scale(gameObject, newScaleValue, 0f );
     }
 }

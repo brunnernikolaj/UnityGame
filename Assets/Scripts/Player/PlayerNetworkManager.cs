@@ -10,7 +10,7 @@ public class PlayerNetworkManager : NetworkBehaviour
 {
     private PlayerController player;
     private SpellCaster playerCaster;
-    private int playerId;
+    public int playerId;
 
     // Update is called once per frame
     void Update()
@@ -26,6 +26,7 @@ public class PlayerNetworkManager : NetworkBehaviour
         player = GetComponent<PlayerController>();
         playerCaster = GetComponent<SpellCaster>();
         playerId = FindObjectOfType<GameManager>().getPlayerId();
+        playerCaster.playerId = playerId;
         GetComponent<SpriteRenderer>().color = PlayerColors.getColor(playerId);
         player.SetupHpBar();
 
@@ -51,5 +52,6 @@ public class PlayerNetworkManager : NetworkBehaviour
         transform.position = sceneName == "scene1" ?
             PlayerStartPositions.getPos(playerId) :
             PlayerStartPositions.getShopPos(playerId);
+
     }
 }

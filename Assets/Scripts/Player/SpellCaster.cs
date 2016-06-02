@@ -26,7 +26,6 @@ public class SpellCaster : NetworkBehaviour {
     void Start () {
         playerCtrl = GetComponent<PlayerController>();
         localPlayer = FindObjectOfType<GameManager>().GetLocalPlayer();
-        playerId = localPlayer.Id;
         spellManager = FindObjectOfType<SpellManager>();
 	}
 
@@ -54,6 +53,7 @@ public class SpellCaster : NetworkBehaviour {
                 selectedKey = key;
                 selectedSpell = localPlayer.Spells[key];
                 selectedSpell.CasterID = localPlayer.Id;
+                
             }
         }
 
@@ -81,7 +81,7 @@ public class SpellCaster : NetworkBehaviour {
         }
         else
         {
-            CmdFire(mousepos, (int)selectedSpell.Type, selectedSpell.Level);
+            CmdFire(mousepos, (int)selectedSpell.Type, selectedSpell.Level,playerId);
         }
 
         localPlayer.Spells[selectedKey].ResetCooldown();
@@ -89,7 +89,7 @@ public class SpellCaster : NetworkBehaviour {
     }
 
     [Command]
-    private void CmdFire(Vector3 mousepos, int spellIndex, int spellLevel)
+    private void CmdFire(Vector3 mousepos, int spellIndex, int spellLevel,int casterId)
     {
         float targetAngle = transform.AngleBetween(mousepos);
 
@@ -101,6 +101,7 @@ public class SpellCaster : NetworkBehaviour {
         var spellObject = spell.GetComponent<ISpellObject>();
         spellObject.StartSpell();
         spellObject.Spell.SetSpellLevel(spellLevel);
+        spellObject.Spell.CasterID = casterId;
         NetworkServer.Spawn(spell);
     }
 }

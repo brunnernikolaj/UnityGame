@@ -25,6 +25,7 @@ namespace Assets.Scripts
         SpellType Type { get; }
 
         bool IsSelfCast { get; }
+        string IconName { get; }
 
         void UpgradeSpell();
 

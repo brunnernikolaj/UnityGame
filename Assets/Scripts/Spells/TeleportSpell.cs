@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.Util;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace Assets.Scripts.Spells
             }
         }
 
-        private int _level = 1;
+        private int _level;
         public int Level
         {
             get
@@ -40,10 +41,14 @@ namespace Assets.Scripts.Spells
             {
                 switch (_level)
                 {
+                    case 0:
+                        return 6;
                     case 1:
                         return 7;
                     case 2:
                         return 8;
+                    case 3:
+                        return 9;
 
                     default:
                         return 0;
@@ -71,10 +76,12 @@ namespace Assets.Scripts.Spells
 
         IEnumerator ISelfCast.Execute(GameObject go)
         {
+            EffectManager.Instance.SpawnEffect(EffectType.TeleportEffect, go.transform.position, go.transform.rotation);
             yield return new WaitForSeconds(0.2f);
             var mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousepos.z = 0;
             go.transform.position = mousepos;
+            EffectManager.Instance.SpawnEffect(EffectType.TeleportEffect, mousepos, go.transform.rotation);
         }
 
         public void SetSpellLevel(int level)
@@ -83,6 +90,14 @@ namespace Assets.Scripts.Spells
         }
 
         public int CasterID { get; set; }
+
+        public string IconName
+        {
+            get
+            {
+                return "Teleport";
+            }
+        }
 
         public void UpgradeSpell()
         {

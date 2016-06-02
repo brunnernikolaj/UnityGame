@@ -50,6 +50,7 @@ public class PlayerController : NetworkBehaviour
 
     void OnLevelWasLoaded(int level)
     {
+        StopMoving();
         navMesh = FindObjectOfType<NavMeshController>();
     }
 
@@ -97,12 +98,12 @@ public class PlayerController : NetworkBehaviour
         }
         else if (collision.gameObject.tag == "Spell")
         {
-            var spell = collision.gameObject.GetComponent<ISpellObject>().Spell as IProjectile;
+            var spell = collision.gameObject.GetComponent<ISpellObject>().Spell as ISpell;
             HandleSpellCollision(collision, spell);
         }
     }
 
-    private void HandleSpellCollision(Collision2D collision, IProjectile spell)
+    private void HandleSpellCollision(Collision2D collision, ISpell spell)
     {
         if (isServer)
         {

@@ -82,6 +82,7 @@ public class GameManager : NetworkBehaviour{
                 var player = new Player { Name = "Lars", Gold = 50,Id = playerCount++};
                 player.Spells = new Dictionary<KeyCode, ISpell>();
                 player.Spells.Add(KeyCode.A, new FireballSpell());
+                player.Spells.Add(KeyCode.D, new HomingOrbSpell());
                 if (item.isLocalPlayer)
                 {
                     localPlayer = player;

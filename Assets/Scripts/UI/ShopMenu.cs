@@ -12,86 +12,137 @@ public class ShopMenu : MonoBehaviour
 {
     public Text GoldText;
 
-    public Button FireballUpgradeBtn;
-    public Text FireballPrice;
+    public List<GameObject> spells;
 
-    public Button TeleportUpgradeBtn;
-    public Text TeleportPrice;
+    public Transform AList;
+    public Transform WList;
 
-    public Button DashUpgradeBtn;
-    public Text DashPrice;
+    public GameObject IconPrefab;
+
+    private Dictionary<KeyCode, List<GameObject>> buttons = new Dictionary<KeyCode, List<GameObject>>();
 
     private Canvas ShopUi;
 
     private Player localPlayer;
 
-    private Dictionary<PurchasableSpell,ISpell> purchasableSpells = new Dictionary<PurchasableSpell, ISpell>();
 
     // Use this for initialization
     void Start()
     {
         ShopUi = GetComponent<Canvas>();
         localPlayer = FindObjectOfType<GameManager>().GetLocalPlayer();
-        //localPlayer = new Player { Gold = 50 };
-        //localPlayer.Spells = new Dictionary<KeyCode, ISpell>();
-        //localPlayer.Spells.Add(KeyCode.A, new FireballSpell());
 
-        purchasableSpells.Add(new PurchasableSpell(FireballUpgradeBtn, FireballPrice, KeyCode.A),new FireballSpell());
-        purchasableSpells.Add(new PurchasableSpell(TeleportUpgradeBtn, TeleportPrice, KeyCode.W),new TeleportSpell());
-        purchasableSpells.Add(new PurchasableSpell(DashUpgradeBtn, DashPrice, KeyCode.W), new DashSpell());
+        var spell = localPlayer.Spells[KeyCode.A];
+        var go = Instantiate(IconPrefab);
 
-        foreach (var spell in purchasableSpells.Keys)
-        {
-            var tempSpell = spell;
-            spell.PurchaseButton.onClick.AddListener(() => BuySpell(tempSpell));
-        }
+        go.GetComponent<SpellShopIcon>().init(spell.UpgradeCost, spell.IconName);
+        go.GetComponent<Button>().onClick.AddListener(() => BuySpell(spell, go, KeyCode.A));
+
+        go.transform.SetParent(AList.transform);
+        buttons.Add(KeyCode.A, new List<GameObject> { go });
+
+        List<ISpell> wSpells = new List<ISpell>
+            {
+                new TeleportSpell(),
+                new DashSpell()
+            };
+
+        SetupSpellCategorey(KeyCode.W, WList, wSpells);
 
         GoldText.text = localPlayer.Gold.ToString();
 
-        foreach (var spellUi in purchasableSpells.Keys)
+        //foreach (var spellUi in purchasableSpells.Keys)
+        //{
+        //    if (!spellUi.IsDisabled)
+        //    {
+        //        spellUi.PurchaseButton.interactable = localPlayer.Gold > purchasableSpells[spellUi].UpgradeCost;
+        //        spellUi.CostText.text = purchasableSpells[spellUi].UpgradeCost + "G";
+        //    }
+        //}
+    }
+
+    private void SetupSpellCategorey(KeyCode keyCode, Transform parentContainer, List<ISpell> spells)
+    {
+        if (localPlayer.Spells.ContainsKey(keyCode))
         {
-            if (!spellUi.IsDisabled)
+            var spell = localPlayer.Spells[keyCode];
+
+            var go = Instantiate(IconPrefab);
+
+            go.GetComponent<SpellShopIcon>().init(spell.UpgradeCost, spell.IconName);
+            go.GetComponent<Button>().onClick.AddListener(() => BuySpell(spell, go, keyCode));
+            go.transform.SetParent(WList.transform);
+
+            if (buttons.ContainsKey(keyCode))
             {
-                spellUi.PurchaseButton.interactable = localPlayer.Gold > purchasableSpells[spellUi].UpgradeCost;
-                spellUi.CostText.text = purchasableSpells[spellUi].UpgradeCost + "G";
+                buttons[keyCode].Add(go);
+            }
+            else
+            {
+                buttons.Add(keyCode, new List<GameObject> { go });
+            }
+        }
+        else
+        {
+            foreach (var spell in spells)
+            {
+                var tempSpell = spell;
+                var go = Instantiate(IconPrefab);
+                var icon = go.GetComponent<SpellShopIcon>();
+                var button = go.GetComponent<Button>();
+
+                icon.init(spell.UpgradeCost, spell.IconName);
+
+                button.onClick.AddListener(() => BuySpell(tempSpell, go, keyCode));
+                go.transform.SetParent(WList.transform);
+
+                if (buttons.ContainsKey(keyCode))
+                {
+                    buttons[keyCode].Add(go);
+                }
+                else
+                {
+                    buttons.Add(keyCode, new List<GameObject> { go });
+                }
             }
         }
     }
 
-    public void BuySpell(PurchasableSpell spell)
+    public void BuySpell(ISpell spell, GameObject icon, KeyCode keyCode)
     {
-        if (!localPlayer.Spells.ContainsKey(spell.Key))
+        if (!localPlayer.Spells.ContainsKey(keyCode))
         {
-            localPlayer.Spells.Add(spell.Key, purchasableSpells[spell]);
+            localPlayer.Spells.Add(keyCode, spell);
         }
 
-        localPlayer.Gold -= localPlayer.Spells[spell.Key].UpgradeCost;
-        localPlayer.Spells[spell.Key].UpgradeSpell();
-        spell.CostText.text = localPlayer.Spells[spell.Key].UpgradeCost.ToString() + "G";
+        localPlayer.Gold -= localPlayer.Spells[keyCode].UpgradeCost;
+        localPlayer.Spells[keyCode].UpgradeSpell();
 
-        var tobeDisabled = purchasableSpells.Keys.Where(x => x.Key == spell.Key).ToList();
-        tobeDisabled.Remove(spell);
+        icon.GetComponent<SpellShopIcon>().UpdatePrice(localPlayer.Spells[keyCode].UpgradeCost);
+
+        var tobeDisabled = new List<GameObject>( buttons[keyCode]);
+
+        if (spell.Level < 3)
+        {
+            tobeDisabled.Remove(icon);
+        }
 
         //Disable all spells that use the same key
         foreach (var tempSpell in tobeDisabled)
         {
-            tempSpell.IsDisabled = true;
-            tempSpell.PurchaseButton.interactable = false;
+            Destroy(tempSpell);
         }
 
-        UpdateButtons();
+        GoldText.text = localPlayer.Gold.ToString();
+        //UpdateButtons();
     }
 
     private void UpdateButtons()
     {
         //Update buttons
-        foreach (var spellUi in purchasableSpells.Keys)
+        foreach (var spellUi in localPlayer.Spells)
         {
-            if (!spellUi.IsDisabled)
-            {
-                spellUi.PurchaseButton.interactable = localPlayer.Gold > localPlayer.Spells[spellUi.Key].UpgradeCost;
-                spellUi.CostText.text = localPlayer.Spells[spellUi.Key].UpgradeCost + "G";
-            }      
+            buttons[spellUi.Key].First().GetComponent<SpellShopIcon>().UpdatePrice(spellUi.Value.UpgradeCost);
         }
 
         //Update player gold
